@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 14:50:13
+ * @LastEditTime: 2023-07-11 16:59:03
  */
 const baseController = require("./index");
 
@@ -13,7 +13,7 @@ const userModel = require("../models/user");
 
 const { createToken, verifyToken } = require("../utils/token");
 
-const { yellow, blue } = require("kolorist");
+const { yellow, blue, green } = require("kolorist");
 
 const { Op } = require("sequelize");
 
@@ -32,11 +32,16 @@ class userController extends baseController {
     let userInfo = "";
 
     const { userName, pwd } = ctx.request.body;
+    console.log(green("正在验证用户是否存在..."));
+
     const isExist = await userModel.findOne({
+      attributes: ["userName"],
       where: {
         userName,
       },
     });
+
+    console.log(green("验证完毕..."));
 
     // 检验是否存在
     if (isExist) {
@@ -45,6 +50,7 @@ class userController extends baseController {
 
       console.log(yellow("[CREATE USER]:用户名已存在，注册失败"));
     } else {
+      console.log(green("用户名不存在，正在进入下一步"));
       try {
         await userModel.create({
           userName,
@@ -54,6 +60,7 @@ class userController extends baseController {
           authority: 2,
           role: "普通用户",
           sex: "未知",
+          isDelete: false,
         });
         ctx.response.status = 200;
 
@@ -68,12 +75,15 @@ class userController extends baseController {
           userName,
           authority: lastUser.dataValues.authority,
           role: lastUser.dataValues.role,
-          sex: lastUser.data.sex,
+          sex: lastUser.dataValues.sex,
+          isDelete: lastUser.dataValues.isDelete,
         };
         data = { token: await createToken(userInfo) };
         msg = "用户注册成功";
+        console.log(blue("用户创建成功！"));
       } catch (err) {
         msg = "用户创建时失败，请重试！";
+        console.log(yellow("用户创建时失败，请重试！"));
       }
     }
     ctx.body = baseController.renderJsonSuccess(msg, data);

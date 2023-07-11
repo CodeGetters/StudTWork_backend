@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 20:10:22
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-01 09:22:08
+ * @LastEditTime: 2023-07-11 14:43:00
  */
 
 const { Sequelize, DataTypes, Model } = require("sequelize");
