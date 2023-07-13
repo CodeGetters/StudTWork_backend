@@ -426,7 +426,7 @@
   dependencies:
     "@types/koa" "*"
 
-"@types/koa@*", "@types/koa@^2.13.5":
+"@types/koa@*", "@types/koa@^2.13.5", "@types/koa@^2.13.6":
   "integrity" "sha512-diYUfp/GqfWBAiwxHtYJ/FQYIXhlEhlyaU7lB/bWQrx4Il9lCET5UwpFy3StOAohfsxxvEQ11qIJgT1j2tfBvw=="
   "resolved" "https://registry.npmmirror.com/@types/koa/-/koa-2.13.6.tgz"
   "version" "2.13.6"
@@ -3359,7 +3359,7 @@
   "resolved" "https://registry.npmmirror.com/trim-newlines/-/trim-newlines-3.0.1.tgz"
   "version" "3.0.1"
 
-"ts-node@^10.8.1", "ts-node@>=10":
+"ts-node@^10.8.1", "ts-node@^10.9.1", "ts-node@>=10":
   "integrity" "sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw=="
   "resolved" "https://registry.npmmirror.com/ts-node/-/ts-node-10.9.1.tgz"
   "version" "10.9.1"
@@ -3445,7 +3445,7 @@
     "media-typer" "0.3.0"
     "mime-types" "~2.1.24"
 
-"typescript@^4.6.4 || ^5.0.0", "typescript@>=2.7", "typescript@>=3":
+"typescript@^4.6.4 || ^5.0.0", "typescript@^5.1.6", "typescript@>=2.7", "typescript@>=3":
   "integrity" "sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA=="
   "resolved" "https://registry.npmmirror.com/typescript/-/typescript-5.1.6.tgz"
   "version" "5.1.6"

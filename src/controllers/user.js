@@ -150,10 +150,11 @@ class userController extends baseController {
 
     try {
       // 从请求头中获取 token
+      // TODO:
       const token = ctx.headers.authorization.split(" ")[1];
       validToken = verifyToken(token);
     } catch (err) {
-      console.log(yellow("[FIND ALLUSER]:Token 已过期"));
+      console.log(yellow("[FIND ALLUSER]:Token 已过期或 Token 值不规范"));
     }
 
     /**
