@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 14:51:27
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 17:15:26
+ * @LastEditTime: 2023-07-14 17:13:33
  */
 const db = require("../db/mysql");
 const userModel = require("./user");
@@ -65,5 +65,3 @@ addressModel.belongsTo(userModel);
 // });
 
 module.exports = addressModel;
-
-// // 建立 Users 和 Posts 之间的关联

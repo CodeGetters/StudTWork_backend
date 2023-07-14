@@ -56,7 +56,7 @@ class userController extends baseController {
           userName,
           pwd,
           registerTime: `${dayjs().format("YYYY-MM-DD HH:mm")}`,
-          // 超级管理员 4、管理员 3、普通用户 2、游客 1
+          // 超级管理员-4、管理员-3、普通用户-2、游客-1
           authority: 2,
           role: "普通用户",
           sex: "未知",
