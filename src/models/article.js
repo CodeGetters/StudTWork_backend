@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 17:38:42
+ * @LastEditTime: 2023-07-15 17:55:14
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -23,7 +23,6 @@ articleModel.init(
       primaryKey: true,
       autoIncrement: true,
     },
-
     articleName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -37,7 +36,7 @@ articleModel.init(
       comment: "作者||发布用户",
     },
     articleCon: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: false,
       field: "articleCon",
       comment: "文章内容",
@@ -52,14 +51,8 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "visualRange",
-      // TODO:同权限可看||选择比自己权限等级小的用户
+      // 公开 0 || 隐藏(只对自己可看) -1 || 选择什么权限才可以看
       comment: "文章可见范围",
-    },
-    isHide: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      field: "isHide",
-      comment: "是否隐藏(草稿||隐藏)",
     },
     isDelete: {
       type: DataTypes.BOOLEAN,
@@ -71,7 +64,7 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "readers",
-      comment: "点赞量",
+      comment: "文章浏览量(默认 0)",
     },
 
     // TODO:将点赞量以及评论分离出来
@@ -86,5 +79,9 @@ articleModel.init(
 
 userModel.hasMany(articleModel);
 articleModel.belongsTo(userModel);
+
+// articleModel.sync({
+//   force: true,
+// });
 
 module.exports = articleModel;

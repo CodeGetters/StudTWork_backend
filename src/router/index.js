@@ -5,13 +5,14 @@
  * @version:
  * @Date: 2023-06-23 17:58:01
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-04 23:59:44
+ * @LastEditTime: 2023-07-15 14:20:32
  */
 const Router = require("@koa/router");
 
 const router = new Router();
 
 const userController = require("../controllers/user");
+const articleController = require("../controllers/article");
 
 router.get("/router", async (ctx, next) => {
   ctx.type = "json";
@@ -22,6 +23,8 @@ router.get("/router", async (ctx, next) => {
   return next();
 });
 
+/* ----------------------user------------------------------ */
+
 router
   // 用户注册
   .post("/user/register", userController.createUser)
@@ -31,42 +34,24 @@ router
   .post("/user/update", userController.updatePwd)
   .post("/user/info", userController.updateUser)
   // 获取权限内的所有用户
-  .get("/user/find", userController.getUser);
-// 删除用户
-// .post("/user/delete", userController);
+  .get("/user/find", userController.getUser)
+  // 注销用户
+  .post("/user/delete", userController.deleteUser)
+  // 用户修改个人信息
+  .post("/user/modify", userController.updateUser);
+
+/* ----------------------article------------------------------ */
+
+router
+  // 创建文章
+  .post("/article/upload", articleController.createArticle)
+  // 查看所有权限内公开的所有文章
+  .get("/article/findArticle", articleController.findArticle)
+  // 查看所有对外公开的文章
+  .get("/article/showArticle", articleController.showArticle)
+  // 查看用户自己的所有文章(包括不公开)
+  .get("/article/findPersonal", articleController.findPersonal);
+
 /* -------------------------------------------------------- */
-// 封装后的路由，用 controller 控制
-// router.get("/user", userController.getUser);
-// router.get("/detail/:id", userController.getUserDetail);
-/* -------------------------------------------------------- */
-
-router.get("/user/:id", async (ctx, next) => {
-  const id = ctx.params.id;
-  console.log("id:", id);
-  if (id === "666") {
-    ctx.body = {
-      code: 200,
-      msg: "输入正确",
-      data: [],
-    };
-  } else {
-    ctx.body = {
-      code: 200,
-      msg: "输入错误",
-      data: [],
-    };
-  }
-  return next();
-});
-
-router.get("/role", async (ctx, next) => {
-  ctx.body = "这是用户角色页";
-  return next();
-});
-
-router.post("/role", async (ctx, next) => {
-  ctx.body = ctx.request.body;
-  return next();
-});
 
 module.exports = router;
