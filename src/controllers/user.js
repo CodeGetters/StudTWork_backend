@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 19:59:10
+ * @LastEditTime: 2023-07-16 00:26:15
  */
 const baseController = require("./index");
 
@@ -13,13 +13,11 @@ const userModel = require("../models/user");
 
 const { createToken, verifyToken } = require("../utils/token");
 
-const { yellow, blue, green } = require("kolorist");
+const { yellow, blue, green, red } = require("kolorist");
 
 const { Op } = require("sequelize");
 
 const dayjs = require("dayjs");
-
-// const { getStatic } = require("../utils/localStatic");
 
 /*
  限制：
@@ -27,9 +25,9 @@ const dayjs = require("dayjs");
  2、被删除的用户不能进行操作
 */
 
-class userController extends baseController {
-  // TODO：用户登录时返回用户的 ip 地址(转成在那个省)，并将登录位置信息记录起来
+// TODO：用户登录时返回用户的 ip 地址(转成在那个省)，并将登录位置信息记录起来
 
+class userController extends baseController {
   /**
    * @description 用户注册
    * @param {*} ctx
@@ -37,18 +35,19 @@ class userController extends baseController {
   static async createUser(ctx) {
     let msg = "";
     let data = [];
-    let userInfo = "";
+    let userInfo = null;
 
     const { userName, pwd } = ctx.request.body;
 
     const isExist = await userModel.findOne({
-      attributes: ["userName"],
+      attributes: ["isDelete"],
       where: {
         userName,
+        isDelete: false,
       },
     });
 
-    // 检验是否存在
+    /* 用户名不存在或者该用户的 isDelete 值为 true */
     if (isExist) {
       msg = "用户名已存在，注册失败";
       ctx.response.status = 409;
@@ -67,22 +66,22 @@ class userController extends baseController {
           isDelete: false,
         });
 
-        // 获取用户注册的相关信息
+        // 获取用户注册的相关信息---查询最后一个用户信息
         const lastUser = await userModel.findOne({
+          // 降序排序
           order: [["id", "DESC"]],
-          attributes: ["id", "userName", "authority", "role", "sex"],
+          attributes: ["id", "authority", "role", "sex"],
         });
-
         const { id, authority, role, sex } = lastUser;
+
         // token 需要携带的用户信息
         userInfo = { id, userName, authority, role, sex };
-
         data = { token: await createToken(userInfo) };
 
         msg = "用户注册成功";
         ctx.response.status = 200;
 
-        console.log(blue("用户创建成功！"));
+        console.log(blue("用户注册成功！"));
       } catch (err) {
         msg = "用户创建时失败，请重试！";
         ctx.response.status = 500;
@@ -96,6 +95,7 @@ class userController extends baseController {
    * @description 用户登录
    * @param {*} ctx
    */
+
   static async userLogin(ctx) {
     let msg = "";
     let userInfo = null;
@@ -103,11 +103,12 @@ class userController extends baseController {
 
     const { userName, pwd } = ctx.request.body;
 
-    // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销字段
+    // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
     const userExist = await userModel.findOne({
-      attributes: ["id", "userName", "pwd", "authority", "sex", "isDelete"],
+      attributes: ["id", "userName", "pwd", "authority", "sex"],
       where: {
         userName,
+        isDelete: false,
       },
     });
 
@@ -121,21 +122,18 @@ class userController extends baseController {
       ctx.response.status = 401;
 
       console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
-    } else if (userExist.dataValues.isDelete) {
-      msg = "登录失败，该用户已注销";
-      ctx.response.status = 404;
-
-      console.log(yellow("[USER LOGIN]:用户已注销，用户登录失败"));
     } else {
       const { id, sex, authority } = userExist;
 
       // token 携带的用户信息
       userInfo = { id, userName, authority, sex };
-
       data = {
         token: createToken(userInfo),
         userInfo,
       };
+      msg = "登录成功";
+      ctx.response.status = 200;
+
       console.log(blue("[USER LOGIN]:登录成功"));
     }
 
@@ -143,7 +141,7 @@ class userController extends baseController {
   }
 
   /**
-   * @description 查找权限内的所有用户 比如 用户 A 权限等级为 3，他能查询比它权限等级小的所有用户 2 1
+   * @description 查找权限内的所有用户(没有被删除) 比如 用户 A 权限等级为 3，他能查询比它权限等级小的所有用户 2 1
    * @param {*} ctx
    */
   static async getUser(ctx) {
@@ -162,6 +160,7 @@ class userController extends baseController {
           "sex",
         ],
         where: {
+          isDelete: false,
           authority: {
             // Op.lte 来表示小于等于运算符 gt:> gte:>= lt:<
             [Op.lt]: userAuthority,
@@ -203,123 +202,86 @@ class userController extends baseController {
     ctx.body = baseController.renderJsonSuccess(msg, data);
   }
 
+  // TODO：修改成功后需要用户重新登录
+
   /**
-   * @description 用户修改自己账户的密码 TODO
+   * @description 用户修改个人密码
    * @param {*} ctx
    */
   static async updatePwd(ctx) {
     let msg = "";
-    // TODO：修改成功后需要用户重新登录
+    const { newPwd, oldPwd } = ctx.request.body;
+
     try {
       // 从请求头中获取 token
       const token = ctx.headers.authorization.split(" ")[1];
-      verifyToken(token);
-    } catch (err) {
-      console.log(yellow("[UPDATE PWD]:Token 已过期"));
-    }
-    // TODO：提取 token 中携带的信息与需要修改的用户进行比较---身份验证
-    const { userName, newPwd, oldPwd } = ctx.request.body;
+      const { id } = verifyToken(token);
 
-    // 根据用户名进行查该用户的相关信息
-    const userInfo = await userModel.findOne({
-      attributes: ["id", "userName", "pwd"],
-      where: {
-        userName,
-      },
-    });
-    const original = userInfo.dataValues;
-    console.log("test", original);
-
-    if (original.pwd !== oldPwd) {
-      console.log("修改失败", original);
-      msg = "原密码错误，修改失败";
-      ctx.response.status = 401;
-    } else {
-      // 更新密码
       try {
-        await userModel.update(
-          {
-            pwd: newPwd,
+        // 根据用户 id 进行查该用户的相关信息
+        const userInfo = await userModel.findOne({
+          attributes: ["pwd"],
+          where: {
+            id,
+            isDelete: false,
           },
-          {
-            where: {
-              id: original.id,
-            },
-          },
-        );
+        });
+
+        if (userInfo.dataValues.pwd !== oldPwd) {
+          msg = "原密码错误，修改失败";
+          ctx.response.status = 401;
+          console.log(yellow("[UPDATE PWD]:原密码错误，修改失败"));
+        } else {
+          // 更新密码
+          await userModel.update({ pwd: newPwd }, { where: { id } });
+          msg = "修改成功，请使用新密码重新登录";
+          ctx.response.status = 200;
+          console.log(blue("[UPDATE PWD]:修改密码成功"));
+        }
       } catch (err) {
-        console.log("失败：", err);
         msg = "修改时发生错误，请重试";
         ctx.response.status = 500;
+        console.log(red("[UPDATE PWD]:修改密码时发生错误"), err);
       }
-
-      msg = "修改成功，请使用新密码重新登录";
-      ctx.response.status = 200;
+    } catch (err) {
+      msg = "token 过期或无效";
+      ctx.response.status = 401;
+      console.log(yellow("[UPDATE PWD]:TOKEN 过期或无效"), err);
     }
+
     ctx.body = baseController.renderJsonSuccess(msg);
   }
 
+  // TODO：修改成功后需要用户重新登录
+
   /**
-   * @description 用户修改个人信息 TODO
+   * @description 用户修改个人信息
    * @param {*} ctx
    */
   static async updateUser(ctx) {
     let msg = "";
-
-    // TODO：可以修改的信息有：用户名(修改前要先判断这个用户名是否被占用)、性别
-    // TODO：修改成功后要颁发新的 token 删除原有的 token
-    // TODO:先鉴权在操作
-    // const { newInfo } = ctx.request.body;
-    let validToken = "";
-
-    // const { userInfo } = ctx.request.body;
-
-    // 判断 token
+    const { userName, sex } = ctx.request.body;
     try {
-      // 从请求头中获取 token
       const token = ctx.headers.authorization.split(" ")[1];
-      validToken = verifyToken(token);
-      console.log("token 正常");
+      const { id } = verifyToken(token);
+
+      try {
+        // 用新信息覆盖旧的信息
+        userModel.update({ userName, sex }, { where: { id } });
+        msg = "修改成功";
+        ctx.response.status = 200;
+
+        console.log(blue("[UPDATE USER]:修改成功"));
+      } catch (err) {
+        msg = "修改失败，修改时发生错误";
+        ctx.response.status = 500;
+        console.log(red("[UPDATE USER]:修改失败，修改时发生错误"));
+      }
     } catch (err) {
-      console.log(yellow("[FIND ALLUSER]:Token 已过期"));
+      msg = "token 过期或无效";
+      ctx.response.status = 401;
+      console.log(yellow("[UPDATE USER]:Token 已过期"));
     }
-    console.log("validToken:", validToken.userName);
-
-    // const userInfo = await userModel.findOne({
-    //   attributes: ["userName"],
-    //   where: {
-    //     userName: validToken.userName
-    //   },
-    // });
-
-    // if (isExist) {
-    //   console.log("用户名已经存在，修改失败");
-    // } else {
-    //   console.log("修改成功");
-    // }
-
-    try {
-      // 更新用户的用户信息
-      await userModel.update(
-        {
-          // 可以更新的信息
-          userName: validToken.userName,
-        },
-        {
-          where: {
-            id: validToken.id,
-          },
-        },
-      );
-    } catch (err) {
-      console.log("更新时失败", err);
-    }
-
-    // 如果没有找到该用户，更新失败
-    // 如果该用户 token 失效，更新失败
-    // 用新信息覆盖旧的信息
-    // console.log("userInfo:", userInfo);
-
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 
@@ -328,8 +290,38 @@ class userController extends baseController {
    * @param {*} ctx
    */
   static async deleteUser(ctx) {
-    // 用户只需将 isDelete 标记为 true 即可
-    ctx.response.body = baseController.renderJsonSuccess();
+    let msg = "";
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const { id } = verifyToken(token);
+
+      try {
+        await userModel.update(
+          {
+            isDelete: true,
+          },
+          {
+            where: {
+              id,
+            },
+          },
+        );
+        msg = "注销成功";
+        ctx.response.status = 200;
+
+        console.log(blue("[DELETE USER]:注销成功"));
+      } catch (err) {
+        msg = "注销失败，注销时发生错误";
+        ctx.response.status = 500;
+        console.log(red("[DELETE USER]:注销时发生错误"), err);
+      }
+    } catch (err) {
+      msg = "token 过期或失效";
+      ctx.response.status = 401;
+      console.log(yellow("[DELETE USER]: TOKEN 过期或失效"), err);
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 }
 

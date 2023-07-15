@@ -106,3 +106,13 @@ pm2 updatePM2          # 在内存中更新 pm2
 pm2 ping               # 确保 pm2 守护进程已经启动
 pm2 sendSignal SIGUSR2 my-app # 向脚本发送系统信号
 ```
+
+## cloc
+
+```shell
+# 忽略 node_modules
+cloc --exclude-dir=^(node_modules)$ .
+
+# 忽略 node_modules public test 文件夹
+cloc --exclude-dir=^(node_modules|public|test)$ .
+```

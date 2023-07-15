@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 20:36:26
+ * @LastEditTime: 2023-07-15 22:44:39
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -318,5 +318,20 @@ class articleController extends baseController {
     ctx.body = baseController.renderJsonSuccess(msg);
   }
 }
+
+// 自动建表---将表模型定义好后使用一次即可
+// articleModel.sync({
+//   force: true,
+// });
+
+// 删除 article 表
+// sequelize
+//   .query("DROP TABLE IF EXISTS article")
+//   .then(() => {
+//     console.log("Article table dropped successfully.");
+//   })
+//   .catch((err) => {
+//     console.error("An error occurred while dropping the article table:", err);
+//   });
 
 module.exports = articleController;

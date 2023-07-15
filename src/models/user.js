@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 15:04:41
+ * @LastEditTime: 2023-07-15 22:43:38
  */
 
 // const { green } = require("kolorist");
@@ -91,6 +91,13 @@ userModel.init(
 //   force: true,
 // });
 
-// console.log(green("[models]"), `user:${user === sequelize.models.user}`);
+// sequelize
+//   .query("DROP TABLE IF EXISTS user")
+//   .then(() => {
+//     console.log("user table dropped successfully.");
+//   })
+//   .catch((err) => {
+//     console.error("An error occurred while dropping the article table:", err);
+//   });
 
 module.exports = userModel;
