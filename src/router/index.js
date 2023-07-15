@@ -47,8 +47,10 @@ router
   .post("/article/upload", articleController.createArticle)
   // 查看所有权限内公开的所有文章
   .get("/article/findArticle", articleController.findArticle)
-  // 查看用户自己的所有文章
-  .get("/article/showArticle", articleController.showArticle);
+  // 查看所有对外公开的文章
+  .get("/article/showArticle", articleController.showArticle)
+  // 查看用户自己的所有文章(包括不公开)
+  .get("/article/findPersonal", articleController.findPersonal);
 
 /* -------------------------------------------------------- */
 

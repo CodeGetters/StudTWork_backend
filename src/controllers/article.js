@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 14:14:25
+ * @LastEditTime: 2023-07-15 18:37:10
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -13,7 +13,7 @@ const { verifyToken } = require("../utils/token");
 const baseController = require("./index");
 const { Op } = require("sequelize");
 const userModel = require("../models/user");
-const { yellow, blue } = require("kolorist");
+const { yellow, blue, red } = require("kolorist");
 
 /*
  限制：
@@ -47,7 +47,6 @@ class articleController extends baseController {
           author: userName,
           releaseTime: `${dayjs().format("YYYY-MM-DD HH:mm")}`,
           visualRange: "0",
-          isHide: false,
           isDelete: false,
           readers: "0",
           userId: id,
@@ -67,7 +66,7 @@ class articleController extends baseController {
   }
 
   /**
-   * @description 查看所有权限内公开的所有文章
+   * @description 查看权限内公开的所有文章
    * @param {*} ctx
    */
   static async findArticle(ctx) {
@@ -147,28 +146,114 @@ class articleController extends baseController {
     let msg = "";
     let data = [];
 
-    const searchArticle = (userName) => {
-      const res = articleModel.findAll({
-        attributes: [],
+    const searchArticle = async () => {
+      const res = await articleModel.findAll({
+        attributes: {
+          exclude: ["isDelete", "visualRange", "userId"],
+        },
+        where: {
+          isDelete: false,
+          visualRange: "0",
+        },
+        include: [
+          {
+            model: userModel,
+            attributes: [],
+            where: {
+              isDelete: false,
+            },
+          },
+        ],
       });
       return res;
     };
 
     try {
       const token = ctx.headers.authorization.split(" ")[1];
-      const { userName } = verifyToken(token);
+      verifyToken(token);
+
+      try {
+        const articleList = await searchArticle();
+
+        data = {
+          articleList: articleList,
+        };
+
+        msg = "查询成功";
+        ctx.response.status = 200;
+
+        console.log(blue("[SHOW ARTICLE]:查询成功"));
+      } catch (err) {
+        msg = "查询过程中失败，请稍后重试";
+        ctx.response.status = 500;
+
+        console.log(red("[SHOW ARTICLE]:查询过程中发生错误"), err);
+      }
     } catch (err) {
-      console.log("[SHOW ARTICLE]:token 无效或过期");
+      msg = "TOKEN 无效或已经过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[SHOW ARTICLE]:token 无效或过期"));
     }
     ctx.response.body = baseController.renderJsonSuccess(msg, data);
   }
 
   /**
-   * @description 查看用户自己的所有文章(包括不公开)
+   * @description 查看用户自己的所有文章(包括不公开但是不包括已经删除的)
    * @param {*} ctx
    */
   static async findPersonal(ctx) {
-    ctx.body = baseController.renderJsonSuccess();
+    let msg = "";
+    let data = [];
+
+    const searchArticle = async (userId) => {
+      const res = await articleModel.findAll({
+        attributes: {
+          exclude: ["userId", "isDelete", "visualRange"],
+        },
+        where: {
+          isDelete: false,
+        },
+        include: [
+          {
+            model: userModel,
+            attributes: [],
+            where: {
+              id: userId,
+              isDelete: false,
+            },
+          },
+        ],
+      });
+
+      return res;
+    };
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const { id } = verifyToken(token);
+
+      try {
+        const articleList = await searchArticle(id);
+        data = {
+          articleList,
+        };
+        msg = "查询成功";
+        ctx.response.status = 200;
+        console.log(blue("[FIND PERSONAL]:查询成功"));
+      } catch (err) {
+        msg = "查询失败，服务端发生错误";
+        ctx.response.status = 500;
+
+        console.log(red("查询时发生错误"), err);
+      }
+    } catch (err) {
+      msg = "token 无效或过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[FIND PERSONAL]:TOKEN 无效或过期"));
+    }
+    ctx.body = baseController.renderJsonSuccess(msg, data);
   }
 
   // TODO:修改文章内容

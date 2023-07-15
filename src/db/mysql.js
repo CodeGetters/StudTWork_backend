@@ -5,14 +5,14 @@
  * @version:
  * @Date: 2023-06-29 20:10:22
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-11 14:43:00
+ * @LastEditTime: 2023-07-15 19:07:58
  */
 
 const { Sequelize, DataTypes, Model } = require("sequelize");
 
 const { green, red } = require("kolorist");
 
-const { host, dialect, port, username, password, database } =
+const { host, dialect, port, username, password, database, logging } =
   require("../config/globalConfig").dataBase;
 
 console.log(green("[MYSQL]"), "init sequelize...");
@@ -33,6 +33,7 @@ const sequelize = new Sequelize(database, username, password, {
     // 如果一个线程 10s 内没有被使用过就释放
     idle: 10000,
   },
+  logging,
   define: {
     // 是否自动添加时间戳
     timestamps: false,

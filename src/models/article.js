@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-14 19:27:07
+ * @LastEditTime: 2023-07-15 17:55:14
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -51,14 +51,8 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "visualRange",
-      // TODO:同权限可看(默认 0)||选择比自己权限等级小的用户(手动选择)
+      // 公开 0 || 隐藏(只对自己可看) -1 || 选择什么权限才可以看
       comment: "文章可见范围",
-    },
-    isHide: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      field: "isHide",
-      comment: "是否隐藏(草稿||隐藏)",
     },
     isDelete: {
       type: DataTypes.BOOLEAN,
