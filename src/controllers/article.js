@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 18:37:10
+ * @LastEditTime: 2023-07-15 20:36:26
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -85,6 +85,9 @@ class articleController extends baseController {
           "readers",
           "articleCon",
         ],
+        where: {
+          isDelete: false,
+        },
         include: [
           {
             model: userModel,
@@ -261,9 +264,58 @@ class articleController extends baseController {
     ctx.body = baseController.renderJsonSuccess();
   }
 
-  // TODO:删除文章
+  /**
+   * @description 删除文章
+   * @param {*} ctx
+   */
   static async deleteArticle(ctx) {
-    ctx.body = baseController.renderJsonSuccess();
+    let msg = "";
+    const { articleId } = ctx.request.body;
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const userId = verifyToken(token).id;
+
+      // 检查该用户是否有操作权限(文章是不是该用户的所属)
+      const articleUser = await articleModel.findOne({
+        attributes: ["userId"],
+        where: {
+          id: articleId,
+        },
+      });
+
+      if (articleUser.dataValues.userId == userId) {
+        try {
+          await articleModel.update(
+            {
+              isDelete: true,
+            },
+            {
+              where: {
+                id: articleId,
+              },
+            },
+          );
+
+          msg = "删除成功";
+          ctx.response.status = 200;
+          console.log(blue("[DELETE ARTICLE]:删除成功"));
+        } catch (err) {
+          ctx.response.status = 500;
+          console.log(red("[DELETE ARTICLE]:删除时发生错误"), err);
+        }
+      } else {
+        msg = "删除失败，无权限操作";
+        ctx.response.status = 403;
+        console.log(yellow("删除失败，用户无权限操作"));
+      }
+    } catch (err) {
+      msg = "删除失败 token 过期或失效";
+      ctx.response.status = 401;
+      console.log(yellow("[DELETE ARTICLE]:TOKEN 过期或失效"), err);
+    }
+
+    ctx.body = baseController.renderJsonSuccess(msg);
   }
 }
 

@@ -50,7 +50,9 @@ router
   // 查看所有对外公开的文章
   .get("/article/showArticle", articleController.showArticle)
   // 查看用户自己的所有文章(包括不公开)
-  .get("/article/findPersonal", articleController.findPersonal);
+  .get("/article/findPersonal", articleController.findPersonal)
+  // 删除用户自己的文章
+  .post("/article/deleteArticle", articleController.deleteArticle);
 
 /* -------------------------------------------------------- */
 

@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 14:24:54
+ * @LastEditTime: 2023-07-15 19:59:10
  */
 const baseController = require("./index");
 
