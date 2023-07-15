@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-11 16:59:03
+ * @LastEditTime: 2023-07-15 14:24:54
  */
 const baseController = require("./index");
 
@@ -21,7 +21,15 @@ const dayjs = require("dayjs");
 
 // const { getStatic } = require("../utils/localStatic");
 
+/*
+ 限制：
+ 1、token 必须没有过期且有效
+ 2、被删除的用户不能进行操作
+*/
+
 class userController extends baseController {
+  // TODO：用户登录时返回用户的 ip 地址(转成在那个省)，并将登录位置信息记录起来
+
   /**
    * @description 用户注册
    * @param {*} ctx
@@ -32,7 +40,6 @@ class userController extends baseController {
     let userInfo = "";
 
     const { userName, pwd } = ctx.request.body;
-    console.log(green("正在验证用户是否存在..."));
 
     const isExist = await userModel.findOne({
       attributes: ["userName"],
@@ -41,8 +48,6 @@ class userController extends baseController {
       },
     });
 
-    console.log(green("验证完毕..."));
-
     // 检验是否存在
     if (isExist) {
       msg = "用户名已存在，注册失败";
@@ -50,7 +55,6 @@ class userController extends baseController {
 
       console.log(yellow("[CREATE USER]:用户名已存在，注册失败"));
     } else {
-      console.log(green("用户名不存在，正在进入下一步"));
       try {
         await userModel.create({
           userName,
@@ -62,27 +66,26 @@ class userController extends baseController {
           sex: "未知",
           isDelete: false,
         });
-        ctx.response.status = 200;
 
         // 获取用户注册的相关信息
         const lastUser = await userModel.findOne({
           order: [["id", "DESC"]],
           attributes: ["id", "userName", "authority", "role", "sex"],
         });
+
+        const { id, authority, role, sex } = lastUser;
         // token 需要携带的用户信息
-        userInfo = {
-          id: lastUser.dataValues.id,
-          userName,
-          authority: lastUser.dataValues.authority,
-          role: lastUser.dataValues.role,
-          sex: lastUser.dataValues.sex,
-          isDelete: lastUser.dataValues.isDelete,
-        };
+        userInfo = { id, userName, authority, role, sex };
+
         data = { token: await createToken(userInfo) };
+
         msg = "用户注册成功";
+        ctx.response.status = 200;
+
         console.log(blue("用户创建成功！"));
       } catch (err) {
         msg = "用户创建时失败，请重试！";
+        ctx.response.status = 500;
         console.log(yellow("用户创建时失败，请重试！"));
       }
     }
@@ -100,39 +103,40 @@ class userController extends baseController {
 
     const { userName, pwd } = ctx.request.body;
 
-    // 根据用户名查询用户的 id、账号、密码、权限等级字段
+    // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销字段
     const userExist = await userModel.findOne({
-      attributes: ["id", "userName", "pwd", "authority", "sex"],
+      attributes: ["id", "userName", "pwd", "authority", "sex", "isDelete"],
       where: {
         userName,
       },
     });
-    // 没有查询到该用户
+
     if (userExist === null) {
       msg = "登录失败，用户名不存在";
       ctx.response.status = 404;
 
       console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
-      // 密码错误
     } else if (pwd !== userExist.dataValues.pwd) {
       msg = "登录失败，密码错误";
       ctx.response.status = 401;
 
       console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
+    } else if (userExist.dataValues.isDelete) {
+      msg = "登录失败，该用户已注销";
+      ctx.response.status = 404;
+
+      console.log(yellow("[USER LOGIN]:用户已注销，用户登录失败"));
     } else {
+      const { id, sex, authority } = userExist;
+
       // token 携带的用户信息
-      userInfo = {
-        id: userExist.dataValues.id,
-        userName: userExist.dataValues.userName,
-        authority: userExist.dataValues.authority,
-        sex: userExist.dataValues.sex,
-      };
-      console.log(blue("[USER LOGIN]:登录成功"));
+      userInfo = { id, userName, authority, sex };
 
       data = {
         token: createToken(userInfo),
         userInfo,
       };
+      console.log(blue("[USER LOGIN]:登录成功"));
     }
 
     ctx.body = baseController.renderJsonSuccess(msg, data);
@@ -145,23 +149,8 @@ class userController extends baseController {
   static async getUser(ctx) {
     let msg = "";
     let data = "";
-    let userList = "";
-    let validToken = "";
 
-    try {
-      // 从请求头中获取 token
-      // TODO:
-      const token = ctx.headers.authorization.split(" ")[1];
-      validToken = verifyToken(token);
-    } catch (err) {
-      console.log(yellow("[FIND ALLUSER]:Token 已过期或 Token 值不规范"));
-    }
-
-    /**
-     * @description 根据用户的权限值获取权限下的所有用户
-     * @param {*} userAuthority
-     * @returns
-     */
+    /* 根据用户的权限值获取权限下的所有用户 */
     const searchUser = async (userAuthority) => {
       const res = await userModel.findAll({
         attributes: [
@@ -181,43 +170,52 @@ class userController extends baseController {
       });
       return res;
     };
-    if (validToken) {
-      const userAuthority = validToken.authority;
+
+    try {
+      // 从请求头中获取 token
+      const token = ctx.headers.authorization.split(" ")[1];
+
+      const userAuthority = verifyToken(token).authority;
 
       // 根据权限值不同做不用的事情 游客-用户-管理员-超级管理员
       if (userAuthority === 1) {
         msg = "用户权限等级不够，查询失败";
         ctx.response.status = 403;
+
+        console.log(yellow("[FIND ALLUSER]:查询失败，用户权限等级不够"));
       } else {
-        userList = await searchUser(userAuthority);
+        data = {
+          users: await searchUser(userAuthority),
+        };
+
         msg = "查询成功";
         ctx.response.status = 200;
-      }
 
-      data = {
-        users: userList,
-      };
-    } else {
-      msg = "token 已失效，请重新登录";
-      ctx.response.status = 404;
+        console.log(blue("[FIND ALLUSER]:查询成功"));
+      }
+    } catch (err) {
+      ctx.response.status = 401;
+      msg = "Token 无效或已过期";
+
+      console.log(yellow("[FIND ALLUSER]:Token 已过期或 Token 值不规范"));
     }
+
     ctx.body = baseController.renderJsonSuccess(msg, data);
   }
 
   /**
-   * @description 用户修改自己账户的密码
+   * @description 用户修改自己账户的密码 TODO
    * @param {*} ctx
    */
   static async updatePwd(ctx) {
     let msg = "";
-
+    // TODO：修改成功后需要用户重新登录
     try {
       // 从请求头中获取 token
       const token = ctx.headers.authorization.split(" ")[1];
       verifyToken(token);
-      console.log(blue("[FIND ALLUSER]:Token 有效"));
     } catch (err) {
-      console.log(yellow("[FIND ALLUSER]:Token 已过期"));
+      console.log(yellow("[UPDATE PWD]:Token 已过期"));
     }
     // TODO：提取 token 中携带的信息与需要修改的用户进行比较---身份验证
     const { userName, newPwd, oldPwd } = ctx.request.body;
@@ -262,13 +260,14 @@ class userController extends baseController {
   }
 
   /**
-   * @description 用户信息更新
+   * @description 用户修改个人信息 TODO
    * @param {*} ctx
    */
   static async updateUser(ctx) {
     let msg = "";
 
-    // 可以修改的信息有：用户名、性别
+    // TODO：可以修改的信息有：用户名(修改前要先判断这个用户名是否被占用)、性别
+    // TODO：修改成功后要颁发新的 token 删除原有的 token
     // TODO:先鉴权在操作
     // const { newInfo } = ctx.request.body;
     let validToken = "";
@@ -323,8 +322,15 @@ class userController extends baseController {
 
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
+
+  /**
+   * @description 用户注销
+   * @param {*} ctx
+   */
+  static async deleteUser(ctx) {
+    // 用户只需将 isDelete 标记为 true 即可
+    ctx.response.body = baseController.renderJsonSuccess();
+  }
 }
 
 module.exports = userController;
-
-// TODO：用户登录时返回用户的 ip 地址(转成在那个省)，并将登录位置信息记录起来
