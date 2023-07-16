@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-16 00:26:15
+ * @LastEditTime: 2023-07-16 21:26:59
  */
 const baseController = require("./index");
 
@@ -37,7 +37,7 @@ class userController extends baseController {
     let data = [];
     let userInfo = null;
 
-    const { userName, pwd } = ctx.request.body;
+    const { userName, pwd, gender } = ctx.request.body;
 
     const isExist = await userModel.findOne({
       attributes: ["isDelete"],
@@ -62,7 +62,7 @@ class userController extends baseController {
           // 超级管理员-4、管理员-3、普通用户-2、游客-1
           authority: 2,
           role: "普通用户",
-          sex: "未知",
+          sex: gender === "" ? "保密" : gender,
           isDelete: false,
         });
 
@@ -76,7 +76,10 @@ class userController extends baseController {
 
         // token 需要携带的用户信息
         userInfo = { id, userName, authority, role, sex };
-        data = { token: await createToken(userInfo) };
+        data = {
+          token: await createToken(userInfo),
+          userInfo,
+        };
 
         msg = "用户注册成功";
         ctx.response.status = 200;
@@ -85,7 +88,7 @@ class userController extends baseController {
       } catch (err) {
         msg = "用户创建时失败，请重试！";
         ctx.response.status = 500;
-        console.log(yellow("用户创建时失败，请重试！"));
+        console.log(yellow("用户创建时失败，请重试！"), err);
       }
     }
     ctx.body = baseController.renderJsonSuccess(msg, data);
