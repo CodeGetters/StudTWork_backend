@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 17:55:14
+ * @LastEditTime: 2023-07-17 21:53:51
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -36,7 +36,7 @@ articleModel.init(
       comment: "作者||发布用户",
     },
     articleCon: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       field: "articleCon",
       comment: "文章内容",
@@ -51,7 +51,7 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "visualRange",
-      // 公开 0 || 隐藏(只对自己可看) -1 || 选择什么权限才可以看
+      // 公开 0 || 隐藏(只对自己可看||草稿) -1 || 选择什么权限才可以看
       comment: "文章可见范围",
     },
     isDelete: {

@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 22:44:39
+ * @LastEditTime: 2023-07-17 21:25:41
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -30,7 +30,7 @@ class articleController extends baseController {
   static async createArticle(ctx) {
     // TODO:加入文章标签、分类(数据库是重建一个表还是就在这个表的基础上进行添加？？？)
     let msg = "";
-    const { articleCon } = ctx.request.body;
+    const { articleName, articleCon, visualRange } = ctx.request.body;
 
     try {
       const token = ctx.headers.authorization.split(" ")[1];
@@ -43,10 +43,10 @@ class articleController extends baseController {
       } else {
         await articleModel.create({
           articleCon,
-          articleName: "默认文章名",
+          articleName,
           author: userName,
           releaseTime: `${dayjs().format("YYYY-MM-DD HH:mm")}`,
-          visualRange: "0",
+          visualRange,
           isDelete: false,
           readers: "0",
           userId: id,

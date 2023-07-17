@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-16 21:26:59
+ * @LastEditTime: 2023-07-16 21:54:09
  */
 const baseController = require("./index");
 
@@ -46,6 +46,7 @@ class userController extends baseController {
         isDelete: false,
       },
     });
+    console.log("-------gender", gender);
 
     /* 用户名不存在或者该用户的 isDelete 值为 true */
     if (isExist) {
