@@ -35,10 +35,12 @@ router
   .post("/user/info", userController.updateUser)
   // 获取权限内的所有用户
   .get("/user/find", userController.getUser)
-  // 注销用户
-  .post("/user/deleteUser", userController.deleteUser)
+  //用户自己手动注销
+  .post("/user/deleteUser", userController.selfLogout)
   // 用户修改个人信息
-  .post("/user/modify", userController.updateUser);
+  .post("/user/modify", userController.updateUser)
+  // 高权限用户删除低权限用户
+  .post("/user/delete", userController.deleteUser);
 
 /* ----------------------article------------------------------ */
 

@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-17 21:25:41
+ * @LastEditTime: 2023-07-20 14:59:59
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -45,7 +45,7 @@ class articleController extends baseController {
           articleCon,
           articleName,
           author: userName,
-          releaseTime: `${dayjs().format("YYYY-MM-DD HH:mm")}`,
+          releaseTime: dayjs(),
           visualRange,
           isDelete: false,
           readers: "0",

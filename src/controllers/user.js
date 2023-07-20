@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-16 21:54:09
+ * @LastEditTime: 2023-07-20 23:35:29
  */
 const baseController = require("./index");
 
@@ -18,6 +18,8 @@ const { yellow, blue, green, red } = require("kolorist");
 const { Op } = require("sequelize");
 
 const dayjs = require("dayjs");
+
+const { createLocation } = require("../utils/location");
 
 /*
  限制：
@@ -37,7 +39,7 @@ class userController extends baseController {
     let data = [];
     let userInfo = null;
 
-    const { userName, pwd, gender } = ctx.request.body;
+    const { userName, pwd, gender, city, province } = ctx.request.body;
 
     const isExist = await userModel.findOne({
       attributes: ["isDelete"],
@@ -46,8 +48,6 @@ class userController extends baseController {
         isDelete: false,
       },
     });
-    console.log("-------gender", gender);
-
     /* 用户名不存在或者该用户的 isDelete 值为 true */
     if (isExist) {
       msg = "用户名已存在，注册失败";
@@ -59,13 +59,14 @@ class userController extends baseController {
         await userModel.create({
           userName,
           pwd,
-          registerTime: `${dayjs().format("YYYY-MM-DD HH:mm")}`,
+          registerTime: dayjs(),
           // 超级管理员-4、管理员-3、普通用户-2、游客-1
           authority: 2,
           role: "普通用户",
           sex: gender === "" ? "保密" : gender,
           isDelete: false,
         });
+        await createLocation(userName, city, province, dayjs());
 
         // 获取用户注册的相关信息---查询最后一个用户信息
         const lastUser = await userModel.findOne({
@@ -82,7 +83,7 @@ class userController extends baseController {
           userInfo,
         };
 
-        msg = "用户注册成功";
+        msg = "success";
         ctx.response.status = 200;
 
         console.log(blue("用户注册成功！"));
@@ -105,7 +106,10 @@ class userController extends baseController {
     let userInfo = null;
     let data = "";
 
-    const { userName, pwd } = ctx.request.body;
+    const { userName, pwd, city, province } = ctx.request.body;
+
+    console.log("-------city-----", city);
+    console.log("-------province-----", province);
 
     // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
     const userExist = await userModel.findOne({
@@ -135,7 +139,7 @@ class userController extends baseController {
         token: createToken(userInfo),
         userInfo,
       };
-      msg = "登录成功";
+      msg = "success";
       ctx.response.status = 200;
 
       console.log(blue("[USER LOGIN]:登录成功"));
@@ -290,10 +294,10 @@ class userController extends baseController {
   }
 
   /**
-   * @description 用户注销
+   * @description 用户自己手动注销
    * @param {*} ctx
    */
-  static async deleteUser(ctx) {
+  static async selfLogout(ctx) {
     let msg = "";
 
     try {
@@ -325,6 +329,16 @@ class userController extends baseController {
       ctx.response.status = 401;
       console.log(yellow("[DELETE USER]: TOKEN 过期或失效"), err);
     }
+    ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 高权限用户删除低权限用户
+   * @param {*} ctx
+   */
+  static async deleteUser(ctx) {
+    let msg = "";
+    // TODO：管理员向超级管理员发出待处理事件，超级管理员判断删除
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 }

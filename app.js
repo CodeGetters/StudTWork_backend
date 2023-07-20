@@ -4,7 +4,7 @@
  * @version:
  * @Date: 2023-06-18 20:30:52
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 20:20:16
+ * @LastEditTime: 2023-07-19 19:14:51
  */
 const koa = require("koa");
 const cors = require("koa-cors");
@@ -33,7 +33,6 @@ const app = new koa();
 app.use(koaStatic(path.join(__dirname, "./public")));
 
 const Router = require("./src/router/index");
-const { cpSync } = require("fs");
 
 app.use(
   cors({
