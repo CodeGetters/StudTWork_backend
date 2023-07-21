@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-20 23:35:29
+ * @LastEditTime: 2023-07-21 09:45:10
  */
 const baseController = require("./index");
 
@@ -26,8 +26,6 @@ const { createLocation } = require("../utils/location");
  1、token 必须没有过期且有效
  2、被删除的用户不能进行操作
 */
-
-// TODO：用户登录时返回用户的 ip 地址(转成在那个省)，并将登录位置信息记录起来
 
 class userController extends baseController {
   /**
@@ -66,7 +64,6 @@ class userController extends baseController {
           sex: gender === "" ? "保密" : gender,
           isDelete: false,
         });
-        await createLocation(userName, city, province, dayjs());
 
         // 获取用户注册的相关信息---查询最后一个用户信息
         const lastUser = await userModel.findOne({
@@ -75,6 +72,8 @@ class userController extends baseController {
           attributes: ["id", "authority", "role", "sex"],
         });
         const { id, authority, role, sex } = lastUser;
+        // 记录位置信息
+        await createLocation(id, userName, city, province, dayjs());
 
         // token 需要携带的用户信息
         userInfo = { id, userName, authority, role, sex };
@@ -108,9 +107,6 @@ class userController extends baseController {
 
     const { userName, pwd, city, province } = ctx.request.body;
 
-    console.log("-------city-----", city);
-    console.log("-------province-----", province);
-
     // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
     const userExist = await userModel.findOne({
       attributes: ["id", "userName", "pwd", "authority", "sex"],
@@ -135,6 +131,9 @@ class userController extends baseController {
 
       // token 携带的用户信息
       userInfo = { id, userName, authority, sex };
+      // 记录登录位置信息
+      await createLocation(id, userName, city, province, dayjs());
+
       data = {
         token: createToken(userInfo),
         userInfo,

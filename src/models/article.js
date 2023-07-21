@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-17 21:53:51
+ * @LastEditTime: 2023-07-21 09:44:37
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -66,7 +66,6 @@ articleModel.init(
       field: "readers",
       comment: "文章浏览量(默认 0)",
     },
-
     // TODO:将点赞量以及评论分离出来
   },
   {

@@ -12,7 +12,6 @@ const userModel = require("./user");
 const { sequelize, Model, DataTypes } = db;
 
 class locationModel extends Model {}
-// TODO:还要显示用户 id、不然无法判断这个用户是否已经注销了
 locationModel.init(
   {
     id: {
@@ -52,11 +51,12 @@ locationModel.init(
   },
 );
 
+userModel.hasMany(locationModel);
+locationModel.belongsTo(userModel);
+
 // 自动建表---将表模型定义好后使用一次即可
 // locationModel.sync({
 //   force: true,
 // });
-userModel.hasMany(locationModel);
-locationModel.belongsTo(userModel);
 
 module.exports = locationModel;
