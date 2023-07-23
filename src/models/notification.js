@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 17:06:13
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 17:30:32
+ * @LastEditTime: 2023-07-23 23:59:07
  */
 
 const db = require("../db/mysql");
@@ -30,7 +30,7 @@ notificationModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "receiver",
-      comment: "接受者",
+      comment: "接受人",
     },
     createTime: {
       type: DataTypes.DATE,

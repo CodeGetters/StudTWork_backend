@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-20 14:59:59
+ * @LastEditTime: 2023-07-24 00:20:50
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -50,6 +50,7 @@ class articleController extends baseController {
           isDelete: false,
           readers: "0",
           userId: id,
+          lastUpdate: dayjs(),
         });
 
         msg = "上传成功";
@@ -76,6 +77,7 @@ class articleController extends baseController {
 
     const searchArticle = async (authority) => {
       /* 查询权限值比查询用户的权限值小于等于的所有文章 */
+      /* 有公开文章以及可见范围文章 */
       const res = await articleModel.findAll({
         attributes: [
           "id",
@@ -84,6 +86,8 @@ class articleController extends baseController {
           "releaseTime",
           "readers",
           "articleCon",
+          "userId",
+          "visualRange",
         ],
         where: {
           isDelete: false,
@@ -91,11 +95,6 @@ class articleController extends baseController {
         include: [
           {
             model: userModel,
-            // 不用显示用户的这些信息
-            // attributes: {
-            //   exclude: ["pwd", "sex", "registerTime", "role", "isDelete"],
-            // },
-
             // 不返回用户的信息
             attributes: [],
             where: {
@@ -142,7 +141,7 @@ class articleController extends baseController {
   }
 
   /**
-   * @description 查看所有对外公开的文章
+   * @description 查看对外公开的文章
    * @param {*} ctx
    */
   static async showArticle(ctx) {
@@ -152,11 +151,19 @@ class articleController extends baseController {
     const searchArticle = async () => {
       const res = await articleModel.findAll({
         attributes: {
-          exclude: ["isDelete", "visualRange", "userId"],
+          exclude: ["isDelete"],
         },
         where: {
           isDelete: false,
-          visualRange: "0",
+          // 1234 || 0
+          [Op.or]: [
+            {
+              visualRange: "1234",
+            },
+            {
+              visualRange: "0",
+            },
+          ],
         },
         include: [
           {
@@ -202,6 +209,178 @@ class articleController extends baseController {
   }
 
   /**
+   * @description 修改对外公开的文章信息
+   * @param {*} ctx
+   */
+  static async updatePublicInfo(ctx) {
+    let msg = "";
+    // TODO：检查修改用户检查权限值：1、修改用户是文章发布者 2、修改用户是该部门的管理员 3、修改用户是超级管理员
+    // TODO：给超级管理员和作者发送站内信
+    const { id, articleName, author, visualRange } = ctx.request.body;
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      // 修改者 id
+      const userId = verifyToken(token).id;
+
+      // 修改者权限值
+      const authority = verifyToken(token).authority;
+
+      const articleRes = await articleModel.findByPk(id);
+      // 文章发布者 id
+      const updateUserId = articleRes.dataValues.userId;
+
+      // 检查是否是文章发布者或超级管理员
+      if (userId === updateUserId || authority === 4) {
+        // 直接修改
+        await articleModel
+          .update(
+            {
+              articleName,
+              author,
+              visualRange,
+            },
+            { where: { id } },
+          )
+          .catch((err) => {
+            msg = "修改失败，修改过程中出现意外";
+            ctx.response.status = 500;
+
+            console.log(red("[PUBLIC INFO]:修改过程中出现意外：", err));
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[PUBLIC INFO]:修改成功"));
+        // 检查是否为管理员
+      } else if (authority === 3) {
+        // TODO
+        // 管理员修改;创修消息，通知超级管理员和发布者
+      } else {
+        // 其他人员没有权限进行修改
+        msg = "修改失败，无操作权限";
+        ctx.response.status = 403;
+
+        console.log(yellow("[PUBLIC INFO]:修改失败，无操作权限"));
+      }
+    } catch (err) {
+      msg = "token 无效或已经过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[PUBLIC INFO]:token 无效或过期"));
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 修改所有对外公开的文章内容
+   * @param {*} ctx
+   */
+  static async updatePublicCon(ctx) {
+    let msg = "";
+    // TODO：验证 Token，检查修改用户权限值，给超级管理员发送站内信
+    const { id, articleCon } = ctx.request.body;
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      // 修改者 id、修改者权限值
+      const userId = verifyToken(token).id;
+      const authority = verifyToken(token).authority;
+
+      const articleRes = await articleModel.findByPk(id);
+      // 文章发布者 id
+      const updateUserId = articleRes.dataValues.userId;
+
+      // 检查是否是文章发布者或超级管理员
+      if (userId === updateUserId || authority === 4) {
+        // 直接修改
+        await articleModel
+          .update({ articleCon }, { where: { id } })
+          .catch((err) => {
+            msg = "修改失败，修改过程中出现意外";
+            ctx.response.status = 500;
+
+            console.log(red("[PUBLIC CON]:修改过程中出现意外：", err));
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[PUBLIC CON]:修改成功"));
+        // 检查是否为管理员
+      } else if (authority === 3) {
+        // TODO:
+        // 管理员修改;创修消息，通知超级管理员和发布者
+      } else {
+        // 其他人员没有权限进行修改
+        msg = "修改失败，无操作权限";
+        ctx.response.status = 403;
+
+        console.log(yellow("[PUBLIC CON]:修改失败，无操作权限"));
+      }
+    } catch (err) {
+      msg = "token 无效或已经过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[PUBLIC CON]:token 无效或过期"));
+    }
+
+    ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 删除对外公开的文章
+   * @param {*} ctx
+   */
+  static async deletePublic(ctx) {
+    let msg = "";
+    const { id } = ctx.request.body;
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      // 修改者 id、修改者权限值
+      const userId = verifyToken(token).id;
+      const authority = verifyToken(token).authority;
+
+      const articleRes = await articleModel.findByPk(id);
+      // 文章发布者 id
+      const updateUserId = articleRes.dataValues.userId;
+
+      // 检查是否是文章发布者或超级管理员
+      if (userId === updateUserId || authority === 4) {
+        // 直接修改
+        await articleModel
+          .update({ isDelete: true }, { where: { id } })
+          .catch((err) => {
+            msg = "修改失败，修改过程中出现意外";
+            ctx.response.status = 500;
+
+            console.log(red("[DELETE PUBLIC]:修改过程中出现意外：", err));
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[DELETE PUBLIC]:删除成功"));
+        // 检查是否为管理员
+      } else if (authority === 3) {
+        // TODO:
+        // 管理员修改;创修消息，通知超级管理员和发布者
+      } else {
+        // 其他人员没有权限进行修改
+        msg = "修改失败，无操作权限";
+        ctx.response.status = 403;
+
+        console.log(yellow("[DELETE PUBLIC]:修改失败，无操作权限"));
+      }
+    } catch (err) {
+      msg = "token 无效或已经过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[DELETE PUBLIC]:删除失败,token 无效或过期", err));
+    }
+
+    ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
    * @description 查看用户自己的所有文章(包括不公开但是不包括已经删除的)
    * @param {*} ctx
    */
@@ -212,7 +391,7 @@ class articleController extends baseController {
     const searchArticle = async (userId) => {
       const res = await articleModel.findAll({
         attributes: {
-          exclude: ["userId", "isDelete", "visualRange"],
+          exclude: ["userId", "isDelete"],
         },
         where: {
           isDelete: false,
@@ -259,18 +438,92 @@ class articleController extends baseController {
     ctx.body = baseController.renderJsonSuccess(msg, data);
   }
 
-  // TODO:修改文章内容
-  static async updateArticle(ctx) {
-    ctx.body = baseController.renderJsonSuccess();
+  /**
+   * 修改个人文章权限
+   * @param {*} ctx
+   */
+  static async updatePersonal(ctx) {
+    let msg = "";
+
+    const { id, author, articleName, visualRange } = ctx.request.body;
+    // 验证 token
+    try {
+      // TODO：检查该用户是否有操作权限(文章是不是该用户的所属)
+
+      const token = ctx.headers.authorization.split(" ")[1];
+      verifyToken(token);
+      try {
+        await articleModel.update(
+          {
+            author,
+            articleName,
+            visualRange,
+            lastUpdate: dayjs(),
+          },
+          { where: { id } },
+        );
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[UPDATE PERSONAL]:修改成功"));
+      } catch (err) {
+        msg = "修改时发生意外";
+        ctx.response.status = 500;
+
+        console.log(yellow("[UPDATE PERSONAL]:更新时发生意外"), err);
+      }
+    } catch (err) {
+      msg = "token 无效或过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[UPDATE PERSONAL]:TOKEN 无效或过期"), err);
+    }
+
+    ctx.body = baseController.renderJsonSuccess(msg);
   }
 
   /**
-   * @description 删除文章
+   * @description：修改自己的文章内容
    * @param {*} ctx
    */
-  static async deleteArticle(ctx) {
+  static async updateCon(ctx) {
     let msg = "";
-    const { articleId } = ctx.request.body;
+
+    const { articleCon, id } = ctx.request.body;
+    // TODO：检查该用户是否有操作权限(文章是不是该用户的所属)
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      verifyToken(token);
+      try {
+        await articleModel.update({ articleCon }, { where: { id } });
+
+        msg = "success";
+        ctx.response.status = 200;
+        console.log(blue("[UPDATE ARTICLE]:修改成功"));
+      } catch (err) {
+        msg = "修改时发生意外";
+        ctx.response.status = 500;
+
+        console.log(yellow("[UPDATE ARTICLE]:修改时发生意外"), err);
+      }
+    } catch (err) {
+      msg = "token 无效或过期";
+      ctx.response.status = 401;
+
+      console.log(yellow("[UPDATE Article]:TOKEN 无效或过期"), err);
+    }
+    ctx.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 用户删除自己的文章
+   * @param {*} ctx
+   */
+  static async deletePersonal(ctx) {
+    let msg = "";
+    // 文章 id
+    const { id } = ctx.request.body;
 
     try {
       const token = ctx.headers.authorization.split(" ")[1];
@@ -279,43 +532,45 @@ class articleController extends baseController {
       // 检查该用户是否有操作权限(文章是不是该用户的所属)
       const articleUser = await articleModel.findOne({
         attributes: ["userId"],
-        where: {
-          id: articleId,
-        },
+        where: { id },
       });
 
-      if (articleUser.dataValues.userId == userId) {
+      if (articleUser.dataValues.userId === userId) {
         try {
-          await articleModel.update(
-            {
-              isDelete: true,
-            },
-            {
-              where: {
-                id: articleId,
-              },
-            },
-          );
+          await articleModel.update({ isDelete: true }, { where: { id } });
 
-          msg = "删除成功";
+          msg = "success";
           ctx.response.status = 200;
           console.log(blue("[DELETE ARTICLE]:删除成功"));
         } catch (err) {
+          msg = "删除时发生意外";
           ctx.response.status = 500;
+
           console.log(red("[DELETE ARTICLE]:删除时发生错误"), err);
         }
       } else {
         msg = "删除失败，无权限操作";
         ctx.response.status = 403;
+
         console.log(yellow("删除失败，用户无权限操作"));
       }
     } catch (err) {
       msg = "删除失败 token 过期或失效";
       ctx.response.status = 401;
+
       console.log(yellow("[DELETE ARTICLE]:TOKEN 过期或失效"), err);
     }
 
     ctx.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 查看某篇文章(根据文章 id)
+   * @param {*} ctx
+   */
+  static async viewArticle(ctx) {
+    let msg = "";
+    ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 }
 

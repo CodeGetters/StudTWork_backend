@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 22:43:38
+ * @LastEditTime: 2023-07-23 20:09:02
  */
 
 // const { green } = require("kolorist");
@@ -49,13 +49,14 @@ userModel.init(
       field: "pwd",
       comment: "密码(5-12)",
     },
+    // 超级管理员 -> 4、管理员 -> 3、用户(默认) -> 2、游客 -> 1
     authority: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "authority",
       comment: "权限等级，数字越大权限越大",
     },
-    // 超级管理员 4、管理员 3、用户 2、游客 1
+    // 超级管理员 -> 4、管理员 -> 3、用户(默认) -> 2、游客 -> 1
     role: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -67,6 +68,13 @@ userModel.init(
       field: "registerTime",
       allowNull: false,
       comment: "注册时间",
+    },
+    // TODO： 0(默认) -> 未分配 || 部门编号
+    department: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "department",
+      comment: "所属组别",
     },
     // TODO：
     // avatar: {
