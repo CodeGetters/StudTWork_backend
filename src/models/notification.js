@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 17:06:13
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-23 23:59:07
+ * @LastEditTime: 2023-07-24 21:38:21
  */
 
 const db = require("../db/mysql");
@@ -19,18 +19,19 @@ notificationModel.init(
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
+      primaryKey: true,
     },
-    creator: {
-      type: DataTypes.STRING,
+    creatorId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
       field: "creator",
-      comment: "创建人",
+      comment: "创建人 id",
     },
-    receiver: {
-      type: DataTypes.STRING,
+    receiverId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
       field: "receiver",
-      comment: "接受人",
+      comment: "接受人 id",
     },
     createTime: {
       type: DataTypes.DATE,
@@ -54,7 +55,7 @@ notificationModel.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "status",
-      comment: "消息状态(创建失败||已读||未读)",
+      comment: "消息状态(已读->1||未读->0)",
     },
   },
   {
@@ -62,7 +63,7 @@ notificationModel.init(
     // 表 不增加复数名，即 user!=>users
     freezeTableName: true,
     // 模型名称
-    modelName: "address",
+    modelName: "notification",
   },
 );
 

@@ -5,13 +5,14 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-24 00:20:50
+ * @LastEditTime: 2023-07-24 22:26:43
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
+const notificationModel = require("../models/notification");
 const { verifyToken } = require("../utils/token");
 const baseController = require("./index");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const userModel = require("../models/user");
 const { yellow, blue, red } = require("kolorist");
 
@@ -220,13 +221,16 @@ class articleController extends baseController {
 
     try {
       const token = ctx.headers.authorization.split(" ")[1];
+
       // 修改者 id
       const userId = verifyToken(token).id;
 
       // 修改者权限值
       const authority = verifyToken(token).authority;
 
-      const articleRes = await articleModel.findByPk(id);
+      const articleRes = await articleModel.findByPk(id).catch((err) => {
+        console.log(red("[PUBLIC INFO]:查找失败", err));
+      });
       // 文章发布者 id
       const updateUserId = articleRes.dataValues.userId;
 
@@ -248,14 +252,82 @@ class articleController extends baseController {
 
             console.log(red("[PUBLIC INFO]:修改过程中出现意外：", err));
           });
+
         msg = "success";
         ctx.response.status = 200;
 
         console.log(blue("[PUBLIC INFO]:修改成功"));
         // 检查是否为管理员
       } else if (authority === 3) {
-        // TODO
-        // 管理员修改;创修消息，通知超级管理员和发布者
+        // 超级管理员 id
+        const findSuperAdmin = await userModel
+          .findOne(
+            { attributes: ["id"] },
+            {
+              where: {
+                authority: 4,
+              },
+            },
+          )
+          .catch((err) => {
+            console.log(red("[PUBLIC INFO]:查找时发生错误:", err));
+          });
+        const superAdminID = findSuperAdmin.dataValues.id;
+
+        // 文章作者
+        const authorName = await userModel
+          .findByPk(updateUserId)
+          .catch((err) => {
+            console.log("[PUBLIC INFO]:查找时发生错误：", red(err));
+          });
+
+        // 原文章信息
+        const oldArticle = await articleModel
+          .findOne(
+            {
+              attributes: ["author", "articleName", "visualRange"],
+            },
+            { where: { id } },
+          )
+          .catch((err) => {
+            console.log(red("[PUBLIC INFO]:查找时发生错误:", err));
+          });
+
+        // 嗨~ 可以拜托你帮个忙吗？有位用户需要你的帮助，他想改变一下他的文章内容，原内容 -> 新内容
+        const notificationCon = ` 嗨~ 可以拜托你帮个忙吗？ ${
+          verifyToken(token).userName
+        } 需要你的帮助，他/她 想改变一下 《${
+          authorName.dataValues.userName
+        } de ${
+          oldArticle.dataValues.articleName
+        }》的信息，以下是详细修改内容，大概长这样：author:${
+          oldArticle.dataValues.author
+        } --> ${author},articleName：${
+          oldArticle.dataValues.articleName
+        } --> ${articleName},visualRange：${
+          oldArticle.dataValues.visualRange
+        } --> ${visualRange}，小的想问问您意见？`;
+
+        await notificationModel
+          .create({
+            creatorId: userId,
+            receiverId: superAdminID,
+            createTime: dayjs(),
+            notificationCon,
+            isDelete: false,
+            status: 0,
+          })
+          .catch((err) => {
+            msg = "创建失败，创建站内信时发生意外";
+            ctx.response.status = 500;
+            console.log(
+              red("[PUBLIC INFO]:创建失败，创建站内信时发生意外", err),
+            );
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[PUBLIC INFO]:站内信发送成功"));
       } else {
         // 其他人员没有权限进行修改
         msg = "修改失败，无操作权限";
@@ -267,13 +339,13 @@ class articleController extends baseController {
       msg = "token 无效或已经过期";
       ctx.response.status = 401;
 
-      console.log(yellow("[PUBLIC INFO]:token 无效或过期"));
+      console.log(yellow("[PUBLIC INFO]:token 无效或过期", err));
     }
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 
   /**
-   * @description 修改所有对外公开的文章内容
+   * @description 修改对外公开的文章内容
    * @param {*} ctx
    */
   static async updatePublicCon(ctx) {
@@ -308,8 +380,73 @@ class articleController extends baseController {
         console.log(blue("[PUBLIC CON]:修改成功"));
         // 检查是否为管理员
       } else if (authority === 3) {
-        // TODO:
-        // 管理员修改;创修消息，通知超级管理员和发布者
+        // 管理员修改;创建消息，通知超级管理员和发布者
+
+        // 查找超级管理员 id
+        const findSuperAdmin = await userModel
+          .findOne(
+            { attributes: ["id"] },
+            {
+              where: {
+                authority: 4,
+              },
+            },
+          )
+          .catch((err) => {
+            console.log(red("[PUBLIC CON]:查找时发生错误:", err));
+          });
+        const superAdminID = findSuperAdmin.dataValues.id;
+
+        // 文章作者
+        const authorName = await userModel
+          .findByPk(updateUserId)
+          .catch((err) => {
+            console.log("[PUBLIC CON]:查找时发生错误：", red(err));
+          });
+
+        // 原文章信息
+        const oldArticle = await articleModel
+          .findOne(
+            {
+              attributes: ["articleCon"],
+            },
+            { where: { id } },
+          )
+          .catch((err) => {
+            console.log(red("[PUBLIC CON]:查找时发生错误:", err));
+          });
+
+        // 嗨~ 可以拜托你帮个忙吗？有位用户需要你的帮助，他想改变一下他的文章内容，原内容 -> 新内容
+        const notificationCon = ` 嗨~ 可以拜托你帮个忙吗？ ${
+          verifyToken(token).userName
+        } 需要你的帮助，他/她 想改变一下 ${
+          authorName.dataValues.userName
+        } de 《${
+          oldArticle.dataValues.articleName
+        }》的，以下是详细修改内容，大概长这样：${
+          oldArticle.dataValues.articleCon
+        } -> ${articleCon}，小的想问问您意见？`;
+
+        await notificationModel
+          .create({
+            creatorId: userId,
+            receiverId: superAdminID,
+            createTime: dayjs(),
+            notificationCon,
+            isDelete: false,
+            status: 0,
+          })
+          .catch((err) => {
+            msg = "创建失败，创建站内信时发生意外";
+            ctx.response.status = 500;
+            console.log(
+              red("[PUBLIC CON]:创建失败，创建站内信时发生意外", err),
+            );
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[PUBLIC CON]:站内信发送成功"));
       } else {
         // 其他人员没有权限进行修改
         msg = "修改失败，无操作权限";
@@ -334,6 +471,7 @@ class articleController extends baseController {
   static async deletePublic(ctx) {
     let msg = "";
     const { id } = ctx.request.body;
+
     try {
       const token = ctx.headers.authorization.split(" ")[1];
       // 修改者 id、修改者权限值
@@ -361,8 +499,74 @@ class articleController extends baseController {
         console.log(blue("[DELETE PUBLIC]:删除成功"));
         // 检查是否为管理员
       } else if (authority === 3) {
-        // TODO:
-        // 管理员修改;创修消息，通知超级管理员和发布者
+        // 管理员修改;创建消息，通知超级管理员和发布者
+
+        // 查找超级管理员 id
+        const findSuperAdmin = await userModel
+          .findOne(
+            { attributes: ["id"] },
+            {
+              where: {
+                authority: 4,
+              },
+            },
+          )
+          .catch((err) => {
+            console.log(red("[DELETE PUBLIC]:查找时发生错误:", err));
+          });
+        const superAdminID = findSuperAdmin.dataValues.id;
+
+        // 文章所有人
+        const authorName = await userModel
+          .findByPk(updateUserId)
+          .catch((err) => {
+            console.log("[DELETE PUBLIC]:查找时发生错误：", red(err));
+          });
+
+        // 原文章信息
+        const oldArticle = await articleModel
+          .findOne(
+            {
+              attributes: [
+                "author",
+                "visualRange",
+                "articleCon",
+                "articleName",
+              ],
+            },
+            { where: { id } },
+          )
+          .catch((err) => {
+            console.log(red("[DELETE PUBLIC]:查找时发生错误:", err));
+          });
+
+        const { author, articleName, visualRange, articleCon } =
+          oldArticle.dataValues;
+
+        const notificationCon = ` 嗨~ 可以拜托你帮个忙吗？ ${
+          verifyToken(token).userName
+        } 需要你的帮助，他/她 想要删除 ${authorName} de 《${articleName}》的，以下是文章详细修改内容，大概长这样：author:${author} visualRange:${visualRange} articleCon: ${articleCon}，小的想问问您意见？`;
+
+        await notificationModel
+          .create({
+            creatorId: userId,
+            receiverId: superAdminID,
+            createTime: dayjs(),
+            notificationCon,
+            isDelete: false,
+            status: 0,
+          })
+          .catch((err) => {
+            msg = "创建失败，创建站内信时发生意外";
+            ctx.response.status = 500;
+            console.log(
+              red("[DELETE PUBLIC]:创建失败，创建站内信时发生意外", err),
+            );
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[DELETE PUBLIC]:站内信创建成功"));
       } else {
         // 其他人员没有权限进行修改
         msg = "修改失败，无操作权限";

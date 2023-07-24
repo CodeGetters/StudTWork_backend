@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-23 17:58:01
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-24 00:14:25
+ * @LastEditTime: 2023-07-24 22:29:09
  */
 const Router = require("@koa/router");
 
@@ -60,6 +60,7 @@ router
   .post("/article/updateCon", articleController.updateCon)
   // 删除用户自己的文章
   .post("/article/deletePersonal", articleController.deletePersonal)
+  // TODO：修改文章的信息需要修改理由
   // 修改对外公开的文章信息
   .post("/article/updatePublicInfo", articleController.updatePublicInfo)
   // 修改对外公开的文章内容
