@@ -4,11 +4,11 @@
  * @version:
  * @Date: 2023-06-18 20:30:52
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 19:22:16
+ * @LastEditTime: 2023-07-19 19:14:51
  */
 const koa = require("koa");
 const cors = require("koa-cors");
-const { port } = require("./src/config/globalConfig").port;
+const port = require("./src/config/globalConfig").port;
 
 // const secret = require("./src/config/globalConfig").jwtOption.secret;
 // const koaJwt = require("koa-jwt");

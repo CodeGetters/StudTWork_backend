@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 17:55:14
+ * @LastEditTime: 2023-07-22 20:19:10
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -36,7 +36,7 @@ articleModel.init(
       comment: "作者||发布用户",
     },
     articleCon: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       field: "articleCon",
       comment: "文章内容",
@@ -51,7 +51,7 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "visualRange",
-      // 公开 0 || 隐藏(只对自己可看) -1 || 选择什么权限才可以看
+      // 公开 0 (=== 123) || 隐藏(只对自己可看||草稿) -1 || 选择什么权限才可以看：如 12，则普通用户和管理员可见
       comment: "文章可见范围",
     },
     isDelete: {
@@ -66,7 +66,12 @@ articleModel.init(
       field: "readers",
       comment: "文章浏览量(默认 0)",
     },
-
+    lastUpdate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "lastUpdate",
+      comment: "文章最后更新时间",
+    },
     // TODO:将点赞量以及评论分离出来
   },
   {

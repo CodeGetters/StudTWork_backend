@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 15:04:41
+ * @LastEditTime: 2023-07-24 21:19:18
  */
 
 // const { green } = require("kolorist");
@@ -49,13 +49,14 @@ userModel.init(
       field: "pwd",
       comment: "密码(5-12)",
     },
+    // 超级管理员 -> 4、管理员 -> 3、用户(默认) -> 2、游客 -> 1
     authority: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "authority",
       comment: "权限等级，数字越大权限越大",
     },
-    // 超级管理员 4、管理员 3、用户 2、游客 1
+    // 超级管理员 -> 4、管理员 -> 3、用户(默认) -> 2、游客 -> 1
     role: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -68,6 +69,13 @@ userModel.init(
       allowNull: false,
       comment: "注册时间",
     },
+    // TODO： 0(默认) -> 未分配 || 部门编号
+    // department: {
+    //   type: DataTypes.STRING,
+    //   allowNull: false,
+    //   field: "department",
+    //   comment: "所属组别",
+    // },
     // TODO：
     // avatar: {
     //   type: DataTypes.TEXT,
@@ -91,6 +99,13 @@ userModel.init(
 //   force: true,
 // });
 
-// console.log(green("[models]"), `user:${user === sequelize.models.user}`);
+// sequelize
+//   .query("DROP TABLE IF EXISTS user")
+//   .then(() => {
+//     console.log("user table dropped successfully.");
+//   })
+//   .catch((err) => {
+//     console.error("An error occurred while dropping the article table:", err);
+//   });
 
 module.exports = userModel;

@@ -1,5 +1,7 @@
 # KOA
 
+[![CodeTime badge](https://img.shields.io/endpoint?style=social&url=https%3A%2F%2Fapi.codetime.dev%2Fshield%3Fid%3D5193%26project%3D%26in%3D0)](https://codetime.dev)
+
 ```txt
 $ tree -I 'node_modules'
 .
@@ -103,4 +105,14 @@ pm2 reset <process>    # 重置元数据(重启时间…)
 pm2 updatePM2          # 在内存中更新 pm2
 pm2 ping               # 确保 pm2 守护进程已经启动
 pm2 sendSignal SIGUSR2 my-app # 向脚本发送系统信号
+```
+
+## cloc
+
+```shell
+# 忽略 node_modules
+cloc --exclude-dir=^(node_modules)$ .
+
+# 忽略 node_modules public test 文件夹
+cloc --exclude-dir=^(node_modules|public|test)$ .
 ```

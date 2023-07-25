@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 22:47:22
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-15 19:29:39
+ * @LastEditTime: 2023-07-21 09:19:39
  */
 
 // 加载 env 文件中的环境变量
@@ -14,7 +14,7 @@ require("dotenv").config({
 });
 
 const defineConfig = {
-  port: 443,
+  port: 5000,
   dataBase: {
     port: 3306,
     dialect: "mysql",
