@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-24 22:26:43
+ * @LastEditTime: 2023-07-26 00:01:12
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -253,7 +253,7 @@ class articleController extends baseController {
             console.log(red("[PUBLIC INFO]:修改过程中出现意外：", err));
           });
 
-        msg = "success";
+        msg = "authorOrSuperSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[PUBLIC INFO]:修改成功"));
@@ -324,7 +324,7 @@ class articleController extends baseController {
               red("[PUBLIC INFO]:创建失败，创建站内信时发生意外", err),
             );
           });
-        msg = "success";
+        msg = "managerSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[PUBLIC INFO]:站内信发送成功"));
@@ -374,7 +374,7 @@ class articleController extends baseController {
 
             console.log(red("[PUBLIC CON]:修改过程中出现意外：", err));
           });
-        msg = "success";
+        msg = "authorOrSuperSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[PUBLIC CON]:修改成功"));
@@ -443,7 +443,7 @@ class articleController extends baseController {
               red("[PUBLIC CON]:创建失败，创建站内信时发生意外", err),
             );
           });
-        msg = "success";
+        msg = "managerSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[PUBLIC CON]:站内信发送成功"));
@@ -493,7 +493,7 @@ class articleController extends baseController {
 
             console.log(red("[DELETE PUBLIC]:修改过程中出现意外：", err));
           });
-        msg = "success";
+        msg = "authorOrSuperSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[DELETE PUBLIC]:删除成功"));
@@ -563,7 +563,7 @@ class articleController extends baseController {
               red("[DELETE PUBLIC]:创建失败，创建站内信时发生意外", err),
             );
           });
-        msg = "success";
+        msg = "managerSuccess";
         ctx.response.status = 200;
 
         console.log(blue("[DELETE PUBLIC]:站内信创建成功"));

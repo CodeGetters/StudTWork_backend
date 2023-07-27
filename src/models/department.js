@@ -5,19 +5,25 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-23 20:08:32
+ * @LastEditTime: 2023-07-27 23:30:15
  */
+
+// https://www.bookstack.cn/read/sequelize-5.x-zh/typescript.md
+// https://github.com/demopark/sequelize-docs-Zh-CN/blob/master/other-topics/typescript.md
+// https://github.com/demopark/sequelize-docs-Zh-CN
 
 // const { green } = require("kolorist");
 
 const db = require("../db/mysql");
 const { sequelize, Model, DataTypes } = db;
 
+const userModel = require("../models/user");
+
 class departmentModel extends Model {}
 
 // 数据类型：https://www.sequelize.cn/core-concepts/model-basics#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B
 
-// 初始化 User 模型
+// 初始化 departmentModel 模型
 departmentModel.init(
   {
     id: {
@@ -29,32 +35,25 @@ departmentModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "departmentName",
-      comment: "部门名",
+      comment: "组名",
     },
     departmentNum: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "departmentNum",
-      comment: "部门人数",
+      comment: "小组人数",
     },
     departmentIntro: {
       type: DataTypes.STRING,
       allowNull: true,
       field: "departmentIntro",
-      comment: "部门介绍",
+      comment: "小组介绍",
     },
     departmentAdmin: {
       type: DataTypes.STRING,
       allowNull: false,
       field: "departmentAdmin",
-      comment: "部门管理员 id",
-    },
-    // TODO
-    departmentAvatar: {
-      type: DataTypes.TEXT,
-      field: "avatar",
-      allowNull: true,
-      comment: "部门头像",
+      comment: "小组管理员 id",
     },
   },
   {
@@ -67,18 +66,12 @@ departmentModel.init(
   },
 );
 
+departmentModel.hasMany(userModel);
+userModel.belongsTo(departmentModel);
+
 // 自动建表---将表模型定义好后使用一次即可
 // departmentModel.sync({
 //   force: true,
 // });
-
-// sequelize
-//   .query("DROP TABLE IF EXISTS user")
-//   .then(() => {
-//     console.log("user table dropped successfully.");
-//   })
-//   .catch((err) => {
-//     console.error("An error occurred while dropping the article table:", err);
-//   });
 
 module.exports = departmentModel;

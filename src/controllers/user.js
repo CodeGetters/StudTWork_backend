@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-21 09:45:10
+ * @LastEditTime: 2023-07-27 23:38:23
  */
 const baseController = require("./index");
 
@@ -63,20 +63,25 @@ class userController extends baseController {
           role: "普通用户",
           sex: gender === "" ? "保密" : gender,
           isDelete: false,
+          //  0(默认) -> 未分配 || 部门编号
+          departmentId: 0,
         });
 
         // 获取用户注册的相关信息---查询最后一个用户信息
         const lastUser = await userModel.findOne({
           // 降序排序
           order: [["id", "DESC"]],
-          attributes: ["id", "authority", "role", "sex"],
+          // `exclude` 属性指定要排除的列
+          attributes: {
+            exclude: ["pwd", "role", "isDelete"],
+          },
         });
-        const { id, authority, role, sex } = lastUser;
+        const { id, authority, role, sex, departmentId } = lastUser;
         // 记录位置信息
         await createLocation(id, userName, city, province, dayjs());
 
         // token 需要携带的用户信息
-        userInfo = { id, userName, authority, role, sex };
+        userInfo = { id, userName, authority, role, sex, departmentId };
         data = {
           token: await createToken(userInfo),
           userInfo,
@@ -109,13 +114,15 @@ class userController extends baseController {
 
     // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
     const userExist = await userModel.findOne({
-      attributes: ["id", "userName", "pwd", "authority", "sex"],
+      attributes: {
+        exclude: ["pwd", "role", "isDelete"],
+      },
       where: {
         userName,
         isDelete: false,
       },
     });
-
+    const userRegister = userExist.dataValues.registerTime;
     if (userExist === null) {
       msg = "登录失败，用户名不存在";
       ctx.response.status = 404;
@@ -127,10 +134,10 @@ class userController extends baseController {
 
       console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
     } else {
-      const { id, sex, authority } = userExist;
+      const { id, sex, authority, departmentId } = userExist;
 
       // token 携带的用户信息
-      userInfo = { id, userName, authority, sex };
+      userInfo = { id, userName, authority, sex, userRegister, departmentId };
       // 记录登录位置信息
       await createLocation(id, userName, city, province, dayjs());
 

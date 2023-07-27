@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-23 17:58:01
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-24 22:29:09
+ * @LastEditTime: 2023-07-27 22:27:27
  */
 const Router = require("@koa/router");
 
@@ -13,7 +13,7 @@ const router = new Router();
 
 const userController = require("../controllers/user");
 const articleController = require("../controllers/article");
-const articleModel = require("../models/article");
+const departmentController = require("../controllers/department");
 
 router.get("/router", async (ctx, next) => {
   ctx.type = "json";
@@ -68,6 +68,7 @@ router
   // 删除对外公开的文章
   .post("/article/deletePublic", articleController.deletePublic);
 
-/* -------------------------------------------------------- */
+/* ------------------------department---------------------------- */
+router.post("/department/create", departmentController.createDepartment);
 
 module.exports = router;
