@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 17:31:43
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-05 17:38:11
+ * @LastEditTime: 2023-07-26 23:17:50
  */
 
 const baseController = require("./index");
@@ -26,6 +26,7 @@ class notificationController extends baseController {
     ctx.body = baseController.renderJsonSuccess();
   }
 
+  // TODO：获取通知
   static async showNotification(ctx) {
     ctx.body = baseController.renderJsonSuccess();
   }

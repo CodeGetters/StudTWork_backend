@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-22 20:19:10
+ * @LastEditTime: 2023-07-27 23:29:42
  */
 const { Model, DataTypes } = require("../db/mysql");
 

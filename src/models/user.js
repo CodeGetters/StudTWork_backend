@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-24 21:19:18
+ * @LastEditTime: 2023-07-27 23:28:06
  */
 
 // const { green } = require("kolorist");
@@ -69,13 +69,13 @@ userModel.init(
       allowNull: false,
       comment: "注册时间",
     },
-    // TODO： 0(默认) -> 未分配 || 部门编号
-    // department: {
-    //   type: DataTypes.STRING,
-    //   allowNull: false,
-    //   field: "department",
-    //   comment: "所属组别",
-    // },
+    //  0(默认) -> 未分配 || 部门编号
+    departmentId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "department",
+      comment: "所属组别",
+    },
     // TODO：
     // avatar: {
     //   type: DataTypes.TEXT,
