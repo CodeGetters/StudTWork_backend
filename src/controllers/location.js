@@ -15,4 +15,11 @@ class locationController extends baseController {
   static async createLocation(ctx) {
     ctx.response.body = baseController.renderJsonSuccess();
   }
+
+  // 根据用户 id 查询用户的最后一次登录信息
+  static async getLastInfo(ctx) {
+    ctx.response.body = baseController.renderJsonSuccess();
+  }
 }
+
+module.exports = locationController;

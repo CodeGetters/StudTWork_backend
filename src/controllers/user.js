@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-27 23:38:23
+ * @LastEditTime: 2023-07-29 11:14:01
  */
 const baseController = require("./index");
 
@@ -115,7 +115,7 @@ class userController extends baseController {
     // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
     const userExist = await userModel.findOne({
       attributes: {
-        exclude: ["pwd", "role", "isDelete"],
+        exclude: ["role", "isDelete"],
       },
       where: {
         userName,
@@ -123,6 +123,7 @@ class userController extends baseController {
       },
     });
     const userRegister = userExist.dataValues.registerTime;
+
     if (userExist === null) {
       msg = "登录失败，用户名不存在";
       ctx.response.status = 404;
@@ -130,9 +131,9 @@ class userController extends baseController {
       console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
     } else if (pwd !== userExist.dataValues.pwd) {
       msg = "登录失败，密码错误";
-      ctx.response.status = 401;
+      ctx.response.status = 403;
 
-      console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
+      console.log(yellow("[USER LOGIN]:登录失败，密码错误"));
     } else {
       const { id, sex, authority, departmentId } = userExist;
 
@@ -243,7 +244,7 @@ class userController extends baseController {
 
         if (userInfo.dataValues.pwd !== oldPwd) {
           msg = "原密码错误，修改失败";
-          ctx.response.status = 401;
+          ctx.response.status = 403;
           console.log(yellow("[UPDATE PWD]:原密码错误，修改失败"));
         } else {
           // 更新密码

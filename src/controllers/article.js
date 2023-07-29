@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-26 00:01:12
+ * @LastEditTime: 2023-07-29 10:24:15
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -61,7 +61,7 @@ class articleController extends baseController {
     } catch (err) {
       ctx.response.status = 401;
       msg = "token 无效或过期";
-      console.log(yellow("[CreateArticle]:Token 无效或过期："), err);
+      console.log(yellow("[CreateArticle]:Token 无效或过期："));
     }
 
     ctx.body = baseController.renderJsonSuccess(msg);
@@ -135,7 +135,7 @@ class articleController extends baseController {
     } catch (err) {
       ctx.response.status = 401;
       msg = "Token 无效或过期";
-      console.log(yellow("[FindArticle]:Token 无效或过期："), err);
+      console.log(yellow("[FindArticle]:Token 无效或过期："));
     }
 
     ctx.body = baseController.renderJsonSuccess(msg, data);
