@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-27 23:30:15
+ * @LastEditTime: 2023-08-01 10:31:13
  */
 
 // https://www.bookstack.cn/read/sequelize-5.x-zh/typescript.md
@@ -47,13 +47,25 @@ departmentModel.init(
       type: DataTypes.STRING,
       allowNull: true,
       field: "departmentIntro",
-      comment: "小组介绍",
+      comment: "小组描述",
     },
     departmentAdmin: {
       type: DataTypes.STRING,
       allowNull: false,
       field: "departmentAdmin",
       comment: "小组管理员 id",
+    },
+    departmentRegister: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "departmentRegister",
+      comment: "小组创建时间",
+    },
+    isDelete: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      filters: "isDelete",
+      comment: "是否被删除",
     },
   },
   {

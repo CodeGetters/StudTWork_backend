@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-29 11:14:01
+ * @LastEditTime: 2023-08-01 10:30:52
  */
 const baseController = require("./index");
 
@@ -166,14 +166,9 @@ class userController extends baseController {
     /* 根据用户的权限值获取权限下的所有用户 */
     const searchUser = async (userAuthority) => {
       const res = await userModel.findAll({
-        attributes: [
-          "id",
-          "userName",
-          "authority",
-          "role",
-          "registerTime",
-          "sex",
-        ],
+        attributes: {
+          exclude: ["pwd"],
+        },
         where: {
           isDelete: false,
           authority: {
@@ -347,6 +342,55 @@ class userController extends baseController {
     let msg = "";
     // TODO：管理员向超级管理员发出待处理事件，超级管理员判断删除
     ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 获取全部管理员人员
+   * @param {*} ctx
+   */
+  static async getManagers(ctx) {
+    let msg = "";
+    let data = [];
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const { authority } = verifyToken(token);
+
+      if (authority === 4) {
+        const adminList = await userModel
+          .findAll({
+            attributes: ["userName", "id"],
+            where: {
+              isDelete: false,
+              authority: 3,
+            },
+          })
+          .catch((err) => {
+            msg = "查询失败，查询过程中出现意外";
+            ctx.response.status = 500;
+
+            console.log(red("[GET MANAGERS]: 查询过程中出现意外！"), err);
+          });
+
+        data = {
+          adminList,
+        };
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[GET MANAGERS]: 查询成功！"));
+      } else {
+        msg = "查询失败，用户权限值不足";
+        ctx.response.status = 403;
+
+        console.log(yellow("[GET MANAGERS]: 用户权限值不够"));
+      }
+    } catch (err) {
+      msg = "token 过期或失效";
+      ctx.response.status = 401;
+
+      console.log(yellow("[GET MANAGERS]: TOKEN 过期或失效"), err);
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
   }
 }
 
