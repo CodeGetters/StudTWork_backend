@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-01 10:30:52
+ * @LastEditTime: 2023-08-02 12:14:26
  */
 const baseController = require("./index");
 
@@ -20,6 +20,7 @@ const { Op } = require("sequelize");
 const dayjs = require("dayjs");
 
 const { createLocation } = require("../utils/location");
+const departmentModel = require("../models/department");
 
 /*
  限制：
@@ -112,44 +113,59 @@ class userController extends baseController {
 
     const { userName, pwd, city, province } = ctx.request.body;
 
-    // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
-    const userExist = await userModel.findOne({
-      attributes: {
-        exclude: ["role", "isDelete"],
-      },
-      where: {
-        userName,
-        isDelete: false,
-      },
-    });
-    const userRegister = userExist.dataValues.registerTime;
+    try {
+      // 根据用户名查询用户的 id、账号、密码、权限等级、是否注销 字段
+      const userExist = await userModel
+        .findOne({
+          attributes: {
+            exclude: ["role", "isDelete"],
+          },
+          where: {
+            userName,
+            isDelete: false,
+          },
+        })
+        .catch((err) => {
+          msg = "登录失败，查询过程中出现意外";
+          ctx.response.status = 500;
 
-    if (userExist === null) {
-      msg = "登录失败，用户名不存在";
-      ctx.response.status = 404;
+          console.log(red("[USER LOGIN]:登录失败"), err);
+        });
 
-      console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
-    } else if (pwd !== userExist.dataValues.pwd) {
-      msg = "登录失败，密码错误";
-      ctx.response.status = 403;
+      if (!userExist) {
+        msg = "登录失败，用户名不存在";
+        ctx.response.status = 404;
 
-      console.log(yellow("[USER LOGIN]:登录失败，密码错误"));
-    } else {
-      const { id, sex, authority, departmentId } = userExist;
+        console.log(yellow("[USER LOGIN]:用户名不存在，用户登录失败"));
+      } else if (pwd !== userExist.dataValues.pwd) {
+        msg = "登录失败，密码错误";
+        ctx.response.status = 403;
 
-      // token 携带的用户信息
-      userInfo = { id, userName, authority, sex, userRegister, departmentId };
-      // 记录登录位置信息
-      await createLocation(id, userName, city, province, dayjs());
+        console.log(yellow("[USER LOGIN]:登录失败，密码错误"));
+      } else {
+        const userRegister = userExist.dataValues.registerTime;
 
-      data = {
-        token: createToken(userInfo),
-        userInfo,
-      };
-      msg = "success";
-      ctx.response.status = 200;
+        const { id, sex, authority, departmentId } = userExist;
 
-      console.log(blue("[USER LOGIN]:登录成功"));
+        // token 携带的用户信息
+        userInfo = { id, userName, authority, sex, userRegister, departmentId };
+        // 记录登录位置信息
+        await createLocation(id, userName, city, province, dayjs());
+
+        data = {
+          token: createToken(userInfo),
+          userInfo,
+        };
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[USER LOGIN]:登录成功"));
+      }
+    } catch (err) {
+      msg = "登录失败";
+      ctx.response.status = 500;
+
+      console.log(yellow("[USER LOGIN]:登录失败"), err);
     }
 
     ctx.body = baseController.renderJsonSuccess(msg, data);
@@ -362,6 +378,7 @@ class userController extends baseController {
             where: {
               isDelete: false,
               authority: 3,
+              departmentId: 0,
             },
           })
           .catch((err) => {
@@ -389,6 +406,45 @@ class userController extends baseController {
       ctx.response.status = 401;
 
       console.log(yellow("[GET MANAGERS]: TOKEN 过期或失效"), err);
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
+  }
+
+  /**
+   * @description 查找特定的用户信息
+   * @param {*} ctx
+   */
+  static async specificUser(ctx) {
+    let msg = "";
+    let data = [];
+
+    const { id } = ctx.request.body;
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      // TODO:权限判断
+
+      const { authority } = verifyToken(token);
+
+      const userInfo = await userModel
+        .findByPk(id, {
+          attributes: { exclude: ["pwd", "isDelete"] },
+        })
+        .catch((err) => {
+          msg = "查询失败，查询过成功中出现意外";
+          ctx.response.status = 500;
+
+          console.log(
+            red("[SPECIFIC USER]: 查询失败，查询过程中出现意外"),
+            err,
+          );
+        });
+      data = { userInfo };
+    } catch (err) {
+      msg = "token 过期或失效";
+      ctx.response.status = 401;
+
+      console.log(yellow("[SPECIFIC USER]: TOKEN 过期或失效"), err);
     }
     ctx.response.body = baseController.renderJsonSuccess(msg, data);
   }

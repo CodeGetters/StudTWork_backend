@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-29 12:05:35
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-01 11:06:37
+ * @LastEditTime: 2023-08-01 23:02:16
  */
 
 const Router = require("@koa/router");
@@ -31,6 +31,8 @@ router
   // 高权限用户删除低权限用户
   .post("/delete", userController.deleteUser)
   // 获取全部管理员信息
-  .get("/getManagers", userController.getManagers);
+  .get("/getManagers", userController.getManagers)
+  // 查询特定的用户信息
+  .post("/specificUser", userController.specificUser);
 
 module.exports = router;

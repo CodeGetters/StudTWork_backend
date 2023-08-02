@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-01 10:31:13
+ * @LastEditTime: 2023-08-02 10:53:20
  */
 
 // https://www.bookstack.cn/read/sequelize-5.x-zh/typescript.md
@@ -53,6 +53,7 @@ departmentModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "departmentAdmin",
+      unique: true,
       comment: "小组管理员 id",
     },
     departmentRegister: {
@@ -67,6 +68,12 @@ departmentModel.init(
       filters: "isDelete",
       comment: "是否被删除",
     },
+    lastUpdate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "updateInfo",
+      comment: "最后更新信息时间",
+    },
   },
   {
     // 传递连接实例
@@ -78,6 +85,7 @@ departmentModel.init(
   },
 );
 
+// 用户和小组模型关系为 多对一
 departmentModel.hasMany(userModel);
 userModel.belongsTo(departmentModel);
 

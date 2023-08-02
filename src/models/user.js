@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-30 11:48:21
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-27 23:28:06
+ * @LastEditTime: 2023-08-01 21:41:21
  */
 
 // const { green } = require("kolorist");
@@ -76,6 +76,13 @@ userModel.init(
       field: "department",
       comment: "所属组别",
     },
+    // TODO:最后更新信息时间
+    // lastUpdate: {
+    //   type: DataTypes.Date,
+    //   allowNull: false,
+    //   field: "lastUpdate",
+    //   comment: "最后更新信息时间",
+    // },
     // TODO：
     // avatar: {
     //   type: DataTypes.TEXT,

@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-29 10:24:15
+ * @LastEditTime: 2023-08-02 14:32:54
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -643,7 +643,7 @@ class articleController extends baseController {
   }
 
   /**
-   * 修改个人文章权限
+   * @description 修改个人文章权限
    * @param {*} ctx
    */
   static async updatePersonal(ctx) {
@@ -774,7 +774,38 @@ class articleController extends baseController {
    */
   static async viewArticle(ctx) {
     let msg = "";
-    ctx.response.body = baseController.renderJsonSuccess(msg);
+    let data = [];
+    const { id } = ctx.query;
+    // TODO:权限，文章是否是作者？文章是否是权限内可见的？文章是否是公开的？
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      verifyToken(token);
+
+      const articleInfo = await articleModel
+        .findOne({
+          attributes: { exclude: ["isDelete", "releaseTime"] },
+          where: { id },
+        })
+        .catch((err) => {
+          msg = "预览时发生意外";
+          ctx.response.status = 500;
+
+          console.log(red("[VIEW ARTICLE]:预览时发生错误"), err);
+        });
+      data = {
+        articleInfo,
+      };
+      msg = "success";
+      ctx.response.status = 200;
+
+      console.log(blue("[VIEW ARTICLE]:查看成功"));
+    } catch (err) {
+      msg = "删除失败 token 过期或失效";
+      ctx.response.status = 401;
+
+      console.log(yellow("[VIEW ARTICLE]:TOKEN 过期或失效"), err);
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
   }
 }
 

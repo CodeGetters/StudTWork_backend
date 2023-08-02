@@ -33,6 +33,8 @@ router
   // 修改对外公开的文章内容
   .post("/updatePublicCon", articleController.updatePublicCon)
   // 删除对外公开的文章
-  .post("/deletePublic", articleController.deletePublic);
+  .post("/deletePublic", articleController.deletePublic)
+  // 预览文章
+  .get("/specific", articleController.viewArticle);
 
 module.exports = router;
