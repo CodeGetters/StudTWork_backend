@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-29 12:05:35
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-01 23:02:16
+ * @LastEditTime: 2023-08-04 11:29:27
  */
 
 const Router = require("@koa/router");
@@ -30,6 +30,8 @@ router
   .post("/modify", userController.updateUser)
   // 高权限用户删除低权限用户
   .post("/delete", userController.deleteUser)
+  // 修改比用户权限低的用户信息
+  .post("/adminUpdate", userController.adminUpdate)
   // 获取全部管理员信息
   .get("/getManagers", userController.getManagers)
   // 查询特定的用户信息

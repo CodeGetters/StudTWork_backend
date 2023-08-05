@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-27 22:18:32
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-02 11:57:29
+ * @LastEditTime: 2023-08-03 23:54:50
  */
 const departmentModel = require("../models/department");
 
@@ -160,6 +160,44 @@ class departmentController extends baseController {
       ctx.response.status = 401;
 
       console.log(yellow("[SHOW DEPARTMENT]: TOKEN 过期或失效"), err);
+    }
+
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
+  }
+
+  /**
+   * @description 返回所有小组
+   * @param {*} ctx
+   */
+  static async showTeams(ctx) {
+    let msg = "";
+    let data = [];
+
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      verifyToken(token);
+
+      const teamList = await departmentModel
+        .findAll({
+          where: { isDelete: false },
+          attributes: { exclude: ["isDelete", "departmentRegister"] },
+        })
+        .catch((err) => {
+          msg = "查询失败，查询过程中出现意外";
+          ctx.response.status = 500;
+
+          console.log(red("[SHOW TEAM]: 查询过程中出现意外！"), err);
+        });
+      data = { teamList };
+      msg = "success";
+      ctx.response.status = 200;
+
+      console.log(blue("[SHOW TEAM]: 查询成功"));
+    } catch (err) {
+      msg = "token 过期或失效";
+      ctx.response.status = 401;
+
+      console.log(yellow("[SHOW TEAM]: TOKEN 过期或失效"), err);
     }
 
     ctx.response.body = baseController.renderJsonSuccess(msg, data);

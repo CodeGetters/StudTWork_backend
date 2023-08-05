@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-02 12:14:26
+ * @LastEditTime: 2023-08-05 10:46:56
  */
 const baseController = require("./index");
 
@@ -21,7 +21,7 @@ const dayjs = require("dayjs");
 
 const { createLocation } = require("../utils/location");
 const departmentModel = require("../models/department");
-
+const notificationModel = require("../models/notification");
 /*
  限制：
  1、token 必须没有过期且有效
@@ -183,7 +183,7 @@ class userController extends baseController {
     const searchUser = async (userAuthority) => {
       const res = await userModel.findAll({
         attributes: {
-          exclude: ["pwd"],
+          exclude: ["pwd", "isDelete"],
         },
         where: {
           isDelete: false,
@@ -301,12 +301,82 @@ class userController extends baseController {
       } catch (err) {
         msg = "修改失败，修改时发生错误";
         ctx.response.status = 500;
-        console.log(red("[UPDATE USER]:修改失败，修改时发生错误"));
+        console.log(red("[UPDATE USER]:修改失败，修改时发生错误"), err);
       }
     } catch (err) {
       msg = "token 过期或无效";
       ctx.response.status = 401;
       console.log(yellow("[UPDATE USER]:Token 已过期"));
+    }
+    ctx.response.body = baseController.renderJsonSuccess(msg);
+  }
+
+  /**
+   * @description 修改比用户权限低的用户信息
+   * @param {*} ctx
+   */
+  static async adminUpdate(ctx) {
+    let msg = "";
+    const { id, userName, authority, sex, departmentId, reason } =
+      ctx.request.body;
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const userId = verifyToken(token).id;
+      if (!reason) {
+        // 超级管理员操作，直接修改
+        await userModel
+          .update(
+            {
+              userName,
+              authority,
+              sex,
+              departmentId,
+            },
+            { where: { id } },
+          )
+          .catch((err) => {
+            msg = "修改失败，修改时发生错误";
+            ctx.response.status = 500;
+
+            console.log(red("[ADMIN UPDATE]:执行过程中出现意外"), err);
+          });
+        msg = "success";
+        ctx.response.status = 200;
+        console.log(blue("[ADMIN UPDATE]:修改成功"));
+      } else {
+        // 超级管理员 id
+        const findSuperAdmin = await userModel
+          .findOne({ attributes: ["id"] }, { where: { authority: 4 } })
+          .catch((err) => {
+            console.log(red("[ADMIN UPDATE]:查找时发生错误:", err));
+          });
+        const superAdminID = findSuperAdmin.dataValues.id;
+        // 生成站内信
+        await notificationModel
+          .create({
+            creatorId: userId,
+            receiverId: superAdminID,
+            createTime: dayjs(),
+            notificationCon: reason,
+            isDelete: false,
+            status: 0,
+          })
+          .catch((err) => {
+            msg = "站内信发送时出现意外";
+
+            ctx.response.status = 500;
+            console.log(red("[ADMIN UPDATE]:站内信发送时出现意外"), err);
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[ADMIN UPDATE]:站内信发送成功"));
+      }
+    } catch (err) {
+      msg = "token 过期或无效";
+      ctx.response.status = 401;
+
+      console.log(yellow("[ADMIN UPDATE]:Token 已过期"));
     }
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
@@ -356,7 +426,65 @@ class userController extends baseController {
    */
   static async deleteUser(ctx) {
     let msg = "";
-    // TODO：管理员向超级管理员发出待处理事件，超级管理员判断删除
+    const { id, reason } = ctx.request.body;
+    try {
+      const token = ctx.headers.authorization.split(" ")[1];
+      const userId = verifyToken(token).id;
+      if (!reason) {
+        await userModel
+          .update({ isDelete: true }, { where: { id } })
+          .catch((err) => {
+            msg = "删除失败，删除时发生意外";
+            ctx.response.status = 500;
+
+            console.log(red("[DELETE USER]:删除失败，删除时发生意外"), err);
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[DELETE USER]:修改成功"));
+      } else {
+        // 管理员 id
+        const superAdmin = await userModel
+          .findOne({ attributes: ["id"] }, { where: { authority: 4 } })
+          .catch((err) => {
+            msg = "查询失败，查询过程中发生意外";
+            ctx.response.status = 500;
+
+            console.log(red("[DELETE USER]:查询失败，查询过程中发生意外"), err);
+          });
+        const superAdminID = superAdmin.dataValues.id;
+
+        // 创建站内信
+        await notificationModel
+          .create({
+            creatorId: userId,
+            receiverId: superAdminID,
+            createTime: dayjs(),
+            notificationCon: reason,
+            isDelete: false,
+            status: 0,
+          })
+          .catch((err) => {
+            msg = "申请失败，站内信创建过程中发生意外";
+            ctx.response.status = 500;
+
+            console.log(
+              red("[DELETE USER]:申请失败，站内信创建过程中发生意外"),
+              err,
+            );
+          });
+        msg = "success";
+        ctx.response.status = 200;
+
+        console.log(blue("[DELETE USER]:站内信发送成功"));
+      }
+    } catch (err) {
+      msg = "token 过期或失效";
+      ctx.response.status = 401;
+      console.log(yellow("[DELETE USER]: TOKEN 过期或失效"), err);
+    }
+
     ctx.response.body = baseController.renderJsonSuccess(msg);
   }
 

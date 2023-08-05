@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-02 14:32:54
+ * @LastEditTime: 2023-08-02 18:05:01
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -42,17 +42,24 @@ class articleController extends baseController {
         ctx.response.status = 403;
         console.log(yellow("[CreateArticle]:文章创建失败，用户权限不足"));
       } else {
-        await articleModel.create({
-          articleCon,
-          articleName,
-          author: userName,
-          releaseTime: dayjs(),
-          visualRange,
-          isDelete: false,
-          readers: "0",
-          userId: id,
-          lastUpdate: dayjs(),
-        });
+        await articleModel
+          .create({
+            articleCon,
+            articleName,
+            author: userName,
+            releaseTime: dayjs(),
+            visualRange,
+            isDelete: false,
+            readers: "0",
+            userId: id,
+            lastUpdate: dayjs(),
+          })
+          .catch((err) => {
+            ctx.response.status = 500;
+            msg = "创建失败，创建过程中出现意外";
+
+            console.log(red("[CREATE ARTICLE]:创建过程中出现意外"), err);
+          });
 
         msg = "上传成功";
         ctx.response.status = 200;

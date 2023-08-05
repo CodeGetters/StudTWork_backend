@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-29 12:22:51
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-02 11:56:30
+ * @LastEditTime: 2023-08-03 23:53:30
  */
 const Router = require("@koa/router");
 const router = new Router({ prefix: "/department" });
@@ -16,6 +16,7 @@ const departmentController = require("../controllers/department");
 router
   .post("/create", departmentController.createDepartment)
   .get("/show", departmentController.showDepartments)
-  .post("/findOne", departmentController.findDepartment);
+  .post("/findOne", departmentController.findDepartment)
+  .get("/team", departmentController.showTeams);
 
 module.exports = router;
