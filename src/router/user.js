@@ -5,29 +5,36 @@
  * @version:
  * @Date: 2023-07-29 12:05:35
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-29 12:07:27
+ * @LastEditTime: 2023-08-04 11:29:27
  */
 
 const Router = require("@koa/router");
-const router = new Router();
+const router = new Router({ prefix: "/user" });
 
 const userController = require("../controllers/user");
 
 router
   // 用户注册
-  .post("/user/register", userController.createUser)
+  .post("/register", userController.createUser)
   // 用户登录
-  .post("/user/login", userController.userLogin)
-  // 更改密码
-  .post("/user/update", userController.updatePwd)
-  .post("/user/info", userController.updateUser)
-  // 获取权限内的所有用户
-  .get("/user/find", userController.getUser)
-  //用户自己手动注销
-  .post("/user/deleteUser", userController.selfLogout)
+  .post("/login", userController.userLogin)
+  // 用户修改个人密码
+  .post("/update", userController.updatePwd)
   // 用户修改个人信息
-  .post("/user/modify", userController.updateUser)
+  .post("/info", userController.updateUser)
+  // 获取权限内的所有用户
+  .get("/find", userController.getUser)
+  //用户自己手动注销
+  .post("/deleteUser", userController.selfLogout)
+  // 用户修改个人信息
+  .post("/modify", userController.updateUser)
   // 高权限用户删除低权限用户
-  .post("/user/delete", userController.deleteUser);
+  .post("/delete", userController.deleteUser)
+  // 修改比用户权限低的用户信息
+  .post("/adminUpdate", userController.adminUpdate)
+  // 获取全部管理员信息
+  .get("/getManagers", userController.getManagers)
+  // 查询特定的用户信息
+  .post("/specificUser", userController.specificUser);
 
 module.exports = router;
