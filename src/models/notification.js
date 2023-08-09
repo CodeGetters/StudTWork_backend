@@ -68,8 +68,8 @@ notificationModel.init(
 );
 
 // 自动建表---将表模型定义好后使用一次即可
-// notificationModel.sync({
-//   force: true,
-// });
+notificationModel.sync({
+  force: false,
+});
 
 module.exports = notificationModel;

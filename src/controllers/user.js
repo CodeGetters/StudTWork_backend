@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-06-29 23:29:57
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-05 10:46:56
+ * @LastEditTime: 2023-08-05 11:08:13
  */
 const baseController = require("./index");
 
@@ -313,6 +313,7 @@ class userController extends baseController {
 
   /**
    * @description 修改比用户权限低的用户信息
+   * // TODO:站内信内容还需要重新写一下
    * @param {*} ctx
    */
   static async adminUpdate(ctx) {

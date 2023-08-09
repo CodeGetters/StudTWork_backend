@@ -90,8 +90,8 @@ departmentModel.hasMany(userModel);
 userModel.belongsTo(departmentModel);
 
 // 自动建表---将表模型定义好后使用一次即可
-// departmentModel.sync({
-//   force: true,
-// });
+departmentModel.sync({
+  force: false,
+});
 
 module.exports = departmentModel;

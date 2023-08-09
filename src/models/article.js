@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-27 23:29:42
+ * @LastEditTime: 2023-08-09 10:41:26
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -85,8 +85,8 @@ articleModel.init(
 userModel.hasMany(articleModel);
 articleModel.belongsTo(userModel);
 
-// articleModel.sync({
-//   force: true,
-// });
+articleModel.sync({
+  force: false,
+});
 
 module.exports = articleModel;

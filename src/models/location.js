@@ -55,8 +55,8 @@ userModel.hasMany(locationModel);
 locationModel.belongsTo(userModel);
 
 // 自动建表---将表模型定义好后使用一次即可
-// locationModel.sync({
-//   force: true,
-// });
+locationModel.sync({
+  force: false,
+});
 
 module.exports = locationModel;

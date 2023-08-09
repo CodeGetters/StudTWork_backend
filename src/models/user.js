@@ -102,9 +102,9 @@ userModel.init(
 );
 
 // 自动建表---将表模型定义好后使用一次即可
-// userModel.sync({
-//   force: true,
-// });
+userModel.sync({
+  force: false,
+});
 
 // sequelize
 //   .query("DROP TABLE IF EXISTS user")
