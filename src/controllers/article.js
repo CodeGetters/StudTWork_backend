@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 16:49:10
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-02 18:05:01
+ * @LastEditTime: 2023-08-10 12:48:43
  */
 const dayjs = require("dayjs");
 const articleModel = require("../models/article");
@@ -812,6 +812,80 @@ class articleController extends baseController {
 
       console.log(yellow("[VIEW ARTICLE]:TOKEN 过期或失效"), err);
     }
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
+  }
+
+  /**
+   * @description 前台查看所有可见文章(不包括文章内容)
+   * @param {*} ctx
+   */
+  static async frontCheck(ctx) {
+    let msg = "";
+    let data = [];
+    // TODO：后序后端重构的时候接口将移除(前台展示要么需要登录，要么只展示可见文章---不登录没有 token 无法判断是哪一个用户)
+    // TODO：后序看看有没有是呢么替代方案，这里暂时查询所有可见文章
+
+    const res = await articleModel
+      .findAll({
+        attributes: {
+          exclude: [
+            "articleCon",
+            "releaseTime",
+            "visualRange",
+            "isDelete",
+            "userId",
+          ],
+        },
+        where: {
+          isDelete: false,
+          // 0 || 123 为所有可见
+          [Op.or]: [{ visualRange: "0" }, { visualRange: "1234" }],
+        },
+      })
+      .catch((err) => {
+        msg = "查找失败，查找时发生意外";
+        ctx.response.status = 500;
+        console.log(red("[FRONT CHECK]:查找时发生意外", err));
+      });
+
+    // articleList 应该是一个数组
+    data = { articleList: res };
+    msg = "success";
+    ctx.response.status = 200;
+
+    console.log(blue("[FRONT CHECK]:查找成功"));
+
+    ctx.response.body = baseController.renderJsonSuccess(msg, data);
+  }
+
+  /**
+   * @description 前台根据文章 id 查看文章
+   * @param {*} ctx
+   */
+  static async frontCheckId(ctx) {
+    let msg = "";
+    let data = [];
+
+    const { id } = ctx.query;
+
+    const res = await articleModel
+      .findOne({
+        attributes: {
+          exclude: ["isDelete", "releaseTime", "visualRange", "userId"],
+        },
+        where: { id, isDelete: false },
+      })
+      .catch((err) => {
+        msg = "查找失败，查找时发生意外";
+        ctx.response.status = 500;
+        console.log(red("[FRONT CHECK ID]:查找时发生意外", err));
+      });
+
+    data = { article: res };
+    msg = "success";
+    ctx.response.status = 200;
+
+    console.log(blue("[FRONT CHECK ID]:查找成功"));
     ctx.response.body = baseController.renderJsonSuccess(msg, data);
   }
 }

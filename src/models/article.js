@@ -5,7 +5,7 @@
  * @version:
  * @Date: 2023-07-05 15:13:26
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-08-09 10:41:26
+ * @LastEditTime: 2023-08-09 22:11:21
  */
 const { Model, DataTypes } = require("../db/mysql");
 
@@ -51,6 +51,7 @@ articleModel.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "visualRange",
+      // TODO：后台权限校验的时候传的是 1234 需要修改
       // 公开 0 (=== 123) || 隐藏(只对自己可看||草稿) -1 || 选择什么权限才可以看：如 12，则普通用户和管理员可见
       comment: "文章可见范围",
     },

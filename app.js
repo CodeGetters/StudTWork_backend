@@ -4,19 +4,15 @@
  * @version:
  * @Date: 2023-06-18 20:30:52
  * @LastEditors: CodeGetters
- * @LastEditTime: 2023-07-19 19:14:51
+ * @LastEditTime: 2023-09-13 20:36:30
  */
 const koa = require("koa");
 const cors = require("koa-cors");
 const port = require("./src/config/globalConfig").port;
-
 // const secret = require("./src/config/globalConfig").jwtOption.secret;
 // const koaJwt = require("koa-jwt");
-
 const bodyParser = require("koa-body").default;
-
 const path = require("path");
-
 const koaStatic = require("koa-static");
 
 // https://github.com/koajs/koa-body/issues/215
@@ -98,6 +94,16 @@ app.use(Router.routes(), Router.allowedMethods());
 //   }
 // });
 
-app.listen(port);
+const { blue } = require("kolorist");
 
-console.log(`http://127.0.0.1:${port}`);
+const webSocket = require("ws");
+let server = app.listen(port, () => {
+  console.log(blue(`http://localhost:${port}`));
+});
+
+const ws = new webSocket.Server({ server });
+ws.on("connection", function connection(ws) {
+  ws.on("message", function incoming(message) {
+    console.log("接收到前端的消息内容:%s", message);
+  });
+});
